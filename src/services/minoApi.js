@@ -374,25 +374,46 @@ export const runMultipleAgents = async (
   const errors = {};
   let completedCount = 0;
 
-  const agentPromises = agentConfigs.map(({ agentType, params }) => {
+  const agentPromises = agentConfigs.map(({ agentType, agentId, params, providerId, providerName }) => {
+    // Use agentId if provided, otherwise fall back to agentType
+    const identifier = agentId || agentType;
+
+    console.log(`🚀 Starting agent: ${identifier} (${agentType})`);
+
     return runAgent(agentType, params, {
       onProgress: (progress) => {
-        callbacks?.onAgentProgress?.(agentType, progress);
+        // Pass the identifier and extra metadata
+        callbacks?.onAgentProgress?.(identifier, {
+          ...progress,
+          providerId,
+          providerName,
+          agentType
+        });
       },
       onComplete: (result) => {
-        results[agentType] = result.data;
+        results[identifier] = result.data;
         completedCount++;
-        callbacks?.onAgentComplete?.(agentType, result);
+        console.log(`✅ Agent complete: ${identifier} (${completedCount}/${agentConfigs.length})`);
+
+        callbacks?.onAgentComplete?.(identifier, {
+          ...result,
+          providerId,
+          providerName,
+          agentType
+        });
 
         if (completedCount === agentConfigs.length) {
+          console.log(`🏁 All ${agentConfigs.length} agents complete`);
           callbacks?.onAllComplete?.({ results, errors });
         }
       },
       onError: (error) => {
-        errors[agentType] = error;
+        errors[identifier] = error;
         completedCount++;
+        console.error(`❌ Agent error: ${identifier}`, error);
 
         if (completedCount === agentConfigs.length) {
+          console.log(`🏁 All ${agentConfigs.length} agents complete (with ${Object.keys(errors).length} errors)`);
           callbacks?.onAllComplete?.({ results, errors });
         }
       }

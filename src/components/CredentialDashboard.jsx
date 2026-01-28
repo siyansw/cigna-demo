@@ -83,16 +83,21 @@ const CredentialDashboard = ({ onBack }) => {
 
       console.log(`  → Creating agents for ${provider.name} (ID: ${provider.id})`);
 
+      // Use unique agentType identifiers that include provider ID
       agentConfigs.push({
         agentType: 'npiRegistry',
+        agentId: `npiRegistry-${provider.id}`,
         params: { npiNumber: provider.npi },
-        providerId: provider.id
+        providerId: provider.id,
+        providerName: provider.name
       });
 
       agentConfigs.push({
         agentType: 'texasMedicalBoard',
+        agentId: `texasMedicalBoard-${provider.id}`,
         params: { lastName, firstName },
-        providerId: provider.id
+        providerId: provider.id,
+        providerName: provider.name
       });
     });
 
@@ -101,29 +106,33 @@ const CredentialDashboard = ({ onBack }) => {
 
     // Run all agents
     await runMultipleAgents(agentConfigs, {
-      onAgentProgress: (agentType, progress) => {
-        console.log(`${agentType}:`, progress.message);
+      onAgentProgress: (identifier, progress) => {
+        console.log(`📊 ${identifier}:`, progress.message);
 
         // Track agent progress for panel and watch live
         setAgentProgress(prev => ({
           ...prev,
-          [`${agentType}-${progress.providerId || ''}`]: progress
+          [identifier]: progress
         }));
 
         // Track logs for watch live modal
         setAgentLogs(prev => [...prev, {
-          agent: agentType,
+          agent: identifier,
           message: progress.message,
           status: progress.status,
-          time: ((Date.now() - startTime) / 1000).toFixed(1) + 's'
+          time: ((Date.now() - startTime) / 1000).toFixed(1) + 's',
+          providerId: progress.providerId,
+          providerName: progress.providerName
         }]);
       },
-      onAgentComplete: (agentType, result) => {
-        console.log(`✓ ${agentType} completed:`, result.data);
+      onAgentComplete: (identifier, result) => {
+        console.log(`✅ ${identifier} completed:`, result.data);
 
         setProviders(prev => prev.map(provider => {
-          const config = agentConfigs.find(c => c.agentType === agentType);
-          if (!config || config.providerId !== provider.id) return provider;
+          // Match by providerId from result
+          if (result.providerId !== provider.id) return provider;
+
+          const agentType = result.agentType;
 
           if (agentType === 'npiRegistry') {
             return {
