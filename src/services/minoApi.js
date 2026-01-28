@@ -152,6 +152,15 @@ const runSimulatedAgent = async (agentType, params, { onProgress, onComplete, on
       progress: 10
     });
 
+    // Send fake streaming URL for demo mode (so Watch Live button shows)
+    await sleep(200);
+    onProgress?.({
+      status: 'running',
+      message: 'Browser stream active',
+      progress: 20,
+      streamingUrl: `https://demo-stream.mino.ai/${agentType}/${Date.now()}`
+    });
+
     // Progress
     await sleep(800);
     onProgress?.({

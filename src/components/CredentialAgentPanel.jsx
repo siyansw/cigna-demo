@@ -31,12 +31,15 @@ const CredentialAgentPanel = ({ providers, isRunning, agentProgress, onWatchLive
     const npiProgress = agentProgress?.[npiAgentKey];
     const licenseProgress = agentProgress?.[licenseAgentKey];
 
+    console.log(`🔍 Provider ${provider.id} - npiProgress:`, npiProgress);
+    console.log(`🔍 Provider ${provider.id} - licenseProgress:`, licenseProgress);
+
     // NPI Agent
     const npiStatus = provider.npiVerified ? 'complete' :
                       (npiProgress?.status === 'running' ? 'running' :
                        (isRunning ? 'pending' : 'pending'));
 
-    agents.push({
+    const npiAgent = {
       id: `npi-${provider.id}`,
       name: `NPI Check - ${provider.name}`,
       icon: FileCheck,
@@ -44,14 +47,17 @@ const CredentialAgentPanel = ({ providers, isRunning, agentProgress, onWatchLive
       progress: provider.npiVerified ? 100 : (npiProgress?.progress || 0),
       result: provider.npiVerified ? 'Verified' : (npiStatus === 'running' ? 'Processing...' : 'Pending'),
       streamingUrl: npiProgress?.streamingUrl
-    });
+    };
+
+    console.log(`🔍 NPI Agent for ${provider.name}:`, npiAgent);
+    agents.push(npiAgent);
 
     // License Agent
     const licenseStatus = provider.licenseVerified ? 'complete' :
                           (licenseProgress?.status === 'running' ? 'running' :
                            (isRunning ? 'pending' : 'pending'));
 
-    agents.push({
+    const licenseAgent = {
       id: `license-${provider.id}`,
       name: `License Check - ${provider.name}`,
       icon: Shield,
@@ -59,7 +65,10 @@ const CredentialAgentPanel = ({ providers, isRunning, agentProgress, onWatchLive
       progress: provider.licenseVerified ? 100 : (licenseProgress?.progress || 0),
       result: provider.licenseVerified ? 'Verified' : (licenseStatus === 'running' ? 'Processing...' : 'Pending'),
       streamingUrl: licenseProgress?.streamingUrl
-    });
+    };
+
+    console.log(`🔍 License Agent for ${provider.name}:`, licenseAgent);
+    agents.push(licenseAgent);
   });
 
   const getStatusIcon = (status) => {
@@ -88,6 +97,10 @@ const CredentialAgentPanel = ({ providers, isRunning, agentProgress, onWatchLive
       <div className="agents-list">
         {agents.map(agent => {
           const hasStream = agent.streamingUrl && MODE === 'live';
+
+          if (hasStream) {
+            console.log(`✅ Agent ${agent.name} has stream:`, agent.streamingUrl);
+          }
 
           return (
             <div
