@@ -1,43 +1,53 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Play, CheckCircle, AlertCircle, Clock, RefreshCw } from 'lucide-react';
-import { providers as initialProviders, demoProviderData } from '../data/providers';
+import {
+  ArrowLeft,
+  Zap,
+  UserCheck,
+  Shield,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  RefreshCw,
+  TrendingUp,
+  FileCheck,
+  Calendar,
+  MapPin,
+  Phone,
+  Building
+} from 'lucide-react';
+import { providers as initialProviders } from '../data/providers';
 import { runMultipleAgents } from '../services/minoApi';
-import NewsFeed from './NewsFeed';
-import WatchLiveModal from './WatchLiveModal';
+import AgentPanel from './AgentPanel';
 import './CredentialDashboard.css';
 
 const CredentialDashboard = ({ onBack }) => {
   const [providers, setProviders] = useState(initialProviders);
+  const [showAgentPanel, setShowAgentPanel] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
-  const [showWatchLive, setShowWatchLive] = useState(false);
-  const [watchLiveModalOpen, setWatchLiveModalOpen] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   const [timestamp, setTimestamp] = useState(null);
-  const [agentLogs, setAgentLogs] = useState([]);
-  const [agentProgress, setAgentProgress] = useState({});
 
-  // Load previous data on mount
+  // Load previous data
   useEffect(() => {
     const savedData = localStorage.getItem('credential-verification-data');
     if (savedData) {
       const parsed = JSON.parse(savedData);
-      setProviders(parsed.providers);
+      setProviders(parsed.providers || initialProviders);
       setTimestamp(parsed.timestamp);
     }
   }, []);
 
   const handleRunVerification = async () => {
     setIsRunning(true);
-    setShowWatchLive(true);
-    setAgentLogs([]);
-    setAgentProgress({});
-
     const startTime = Date.now();
 
-    // Prepare agent configurations for all providers
+    // Prepare agent configurations
     const agentConfigs = [];
     providers.forEach((provider) => {
-      const [firstName, lastName] = provider.name.split(' ').slice(-2);
+      const nameParts = provider.name.split(' ');
+      const lastName = nameParts[nameParts.length - 1];
+      const firstName = nameParts[0];
 
       agentConfigs.push({
         agentType: 'npiRegistry',
@@ -52,25 +62,14 @@ const CredentialDashboard = ({ onBack }) => {
       });
     });
 
-    // Run all agents in parallel
+    // Run all agents
     await runMultipleAgents(agentConfigs, {
       onAgentProgress: (agentType, progress) => {
-        setAgentProgress(prev => ({
-          ...prev,
-          [agentType]: progress
-        }));
-
-        setAgentLogs(prev => [...prev, {
-          agent: agentType,
-          message: progress.message,
-          status: progress.status,
-          time: ((Date.now() - startTime) / 1000).toFixed(1) + 's'
-        }]);
+        console.log(`${agentType}:`, progress.message);
       },
       onAgentComplete: (agentType, result) => {
         console.log(`✓ ${agentType} completed:`, result.data);
 
-        // Update provider data with results
         setProviders(prev => prev.map(provider => {
           const config = agentConfigs.find(c => c.agentType === agentType);
           if (!config || config.providerId !== provider.id) return provider;
@@ -79,282 +78,301 @@ const CredentialDashboard = ({ onBack }) => {
             return {
               ...provider,
               npiData: result.data,
-              npiRetrievalTime: ((Date.now() - startTime) / 1000).toFixed(1)
+              npiVerified: true
             };
           } else if (agentType === 'texasMedicalBoard') {
             return {
               ...provider,
               licenseData: result.data,
-              licenseRetrievalTime: ((Date.now() - startTime) / 1000).toFixed(1),
+              licenseVerified: true,
               verified: true
             };
           }
           return provider;
         }));
       },
-      onAllComplete: ({ results, errors }) => {
+      onAllComplete: () => {
         const executionTime = ((Date.now() - startTime) / 1000).toFixed(1);
-        console.log(`All agents complete in ${executionTime}s`);
-
+        console.log(`All verification complete in ${executionTime}s`);
         setIsRunning(false);
+        setLastUpdated(new Date());
         setTimestamp(new Date().toISOString());
 
-        // Save to localStorage
-        const finalProviders = providers.map(provider => ({
-          ...provider,
-          verified: true
-        }));
-
         localStorage.setItem('credential-verification-data', JSON.stringify({
-          providers: finalProviders,
+          providers,
           timestamp: new Date().toISOString()
         }));
       }
     });
   };
 
-  const handleRefresh = () => {
-    handleRunVerification();
+  const getStatusColor = (status) => {
+    if (status === 'Active') return 'status-active';
+    if (status === 'Inactive') return 'status-inactive';
+    return 'status-pending';
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  };
-
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    return date.toLocaleString('en-US', {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
   };
 
   return (
-    <div className="credential-dashboard">
-      {/* Header with back button */}
-      <div className="credential-header">
-        <button className="back-button" onClick={onBack}>
-          <ArrowLeft size={20} />
-          Back to Menu
-        </button>
-      </div>
-
-      {/* Hero Section */}
-      <motion.div
-        className="credential-hero"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="credential-title">
-          Cigna Provider Credential Verification
-        </h1>
-        <p className="credential-subtitle">
-          Real-time automated credentialing at scale
-        </p>
-
-        <div className="credential-actions">
-          <button
-            className={`run-button ${isRunning ? 'running' : ''}`}
-            onClick={handleRunVerification}
-            disabled={isRunning}
-          >
-            {isRunning ? (
-              <>
-                <Clock size={20} className="animate-pulse" />
-                Running Verification...
-              </>
-            ) : (
-              <>
-                <Play size={20} />
-                Run Verification
-              </>
-            )}
+    <motion.div
+      className="dashboard"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {/* Header */}
+      <header className="dashboard-header">
+        <div className="header-left">
+          <button className="btn btn-ghost btn-icon" onClick={onBack}>
+            <ArrowLeft size={20} />
           </button>
-
-          {showWatchLive && (
-            <motion.button
-              className="watch-live-button"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              onClick={() => setWatchLiveModalOpen(true)}
-            >
-              <span className="live-indicator"></span>
-              Watch Live
-            </motion.button>
-          )}
-
-          {timestamp && !isRunning && (
-            <button className="refresh-button" onClick={handleRefresh}>
-              <RefreshCw size={18} />
-              Refresh
-            </button>
-          )}
+          <div className="header-logo">
+            <div className="logo-icon">
+              <Zap size={14} />
+            </div>
+            <span>TinyFish</span>
+          </div>
+          <span className="header-divider">|</span>
+          <span className="header-title">Cigna Provider Credentialing</span>
         </div>
-
-        {timestamp && (
-          <p className="credential-timestamp">
-            Last updated: {formatTimestamp(timestamp)}
-          </p>
-        )}
-      </motion.div>
-
-      {/* Provider Cards */}
-      <div className="provider-cards">
-        {providers.map((provider, index) => (
-          <motion.div
-            key={provider.id}
-            className="provider-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
+        <div className="header-right">
+          <div className="header-status">
+            <Clock size={14} />
+            <span>Last Updated: {lastUpdated.toLocaleTimeString()}</span>
+          </div>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowAgentPanel(!showAgentPanel)}
           >
-            <div className="provider-card-header">
-              <div>
-                <h3 className="provider-name">
-                  {provider.name}, {provider.credentials}
-                </h3>
-                <p className="provider-specialty">{provider.specialty}</p>
-              </div>
-              {provider.verified && (
-                <div className="verification-badge verified">
-                  <CheckCircle size={18} />
-                  VERIFIED
-                </div>
-              )}
-            </div>
+            <UserCheck size={16} />
+            {showAgentPanel ? 'Hide' : 'Show'} Agents
+          </button>
+        </div>
+      </header>
 
-            {provider.verified ? (
-              <div className="provider-card-body">
-                {/* NPI Data */}
-                <div className="verification-section">
-                  <div className="section-header">
-                    <CheckCircle size={16} className="text-green" />
-                    <span className="section-title">NPI Verified</span>
-                  </div>
-                  <div className="section-content">
-                    <div className="data-row">
-                      <span className="data-label">NPI:</span>
-                      <span className="data-value">{provider.npiData.npi}</span>
-                    </div>
-                    <div className="data-row">
-                      <span className="data-label">Specialty:</span>
-                      <span className="data-value">{provider.npiData.taxonomy}</span>
-                    </div>
-                    <div className="data-row">
-                      <span className="data-label">Status:</span>
-                      <span className="data-value status-active">{provider.npiData.status}</span>
-                    </div>
-                    <div className="data-row">
-                      <span className="data-label">Retrieved:</span>
-                      <span className="data-value">{provider.npiRetrievalTime} sec</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* License Data */}
-                <div className="verification-section">
-                  <div className="section-header">
-                    <CheckCircle size={16} className="text-green" />
-                    <span className="section-title">TX License Active</span>
-                  </div>
-                  <div className="section-content">
-                    <div className="data-row">
-                      <span className="data-label">License #:</span>
-                      <span className="data-value">{provider.licenseData.licenseNumber}</span>
-                    </div>
-                    <div className="data-row">
-                      <span className="data-label">Status:</span>
-                      <span className="data-value status-active">{provider.licenseData.licenseStatus}</span>
-                    </div>
-                    <div className="data-row">
-                      <span className="data-label">Expires:</span>
-                      <span className="data-value">{formatDate(provider.licenseData.expirationDate)}</span>
-                    </div>
-                    <div className="data-row">
-                      <span className="data-label">Retrieved:</span>
-                      <span className="data-value">{provider.licenseRetrievalTime} sec</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Disciplinary Actions */}
-                <div className="verification-section">
-                  <div className="section-header">
-                    <CheckCircle size={16} className="text-green" />
-                    <span className="section-title">No Disciplinary Actions</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="provider-card-placeholder">
-                <p className="placeholder-text">
-                  Click "Run Verification" to check credentials
-                </p>
-              </div>
-            )}
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Scalability Section */}
-      {providers.some(p => p.verified) && (
-        <motion.div
-          className="scalability-section"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <h3 className="scalability-title">Scale to Thousands of Providers</h3>
-          <p className="scalability-description">
-            This demo verifies 2 providers in ~8 seconds. TinyFish can parallelize to verify 100+ providers
-            simultaneously, completing 1,000 provider credentialing checks in under 2 minutes.
-          </p>
-          <div className="scalability-stats">
+      <div className="dashboard-layout">
+        {/* Main Content */}
+        <main className="dashboard-main">
+          {/* Stats Cards */}
+          <div className="stats-grid">
             <div className="stat-card">
-              <div className="stat-value">2 providers</div>
-              <div className="stat-label">~8 seconds</div>
+              <div className="stat-icon verified">
+                <CheckCircle size={20} />
+              </div>
+              <div className="stat-content">
+                <div className="stat-value">{providers.filter(p => p.verified).length}/2</div>
+                <div className="stat-label">Verified</div>
+              </div>
             </div>
-            <div className="stat-divider">→</div>
             <div className="stat-card">
-              <div className="stat-value">100 providers</div>
-              <div className="stat-label">~15 seconds</div>
+              <div className="stat-icon active">
+                <Shield size={20} />
+              </div>
+              <div className="stat-content">
+                <div className="stat-value">{providers.filter(p => p.licenseData?.licenseStatus === 'Active').length}/2</div>
+                <div className="stat-label">Active Licenses</div>
+              </div>
             </div>
-            <div className="stat-divider">→</div>
             <div className="stat-card">
-              <div className="stat-value">1,000 providers</div>
-              <div className="stat-label">~2 minutes</div>
+              <div className="stat-icon success">
+                <FileCheck size={20} />
+              </div>
+              <div className="stat-content">
+                <div className="stat-value">0</div>
+                <div className="stat-label">Alerts</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">
+                <TrendingUp size={20} />
+              </div>
+              <div className="stat-content">
+                <div className="stat-value">~8s</div>
+                <div className="stat-label">Avg Time</div>
+              </div>
             </div>
           </div>
-        </motion.div>
-      )}
 
-      {/* News Feed */}
-      <NewsFeed type="credential" />
+          {/* Provider Cards */}
+          <div className="section">
+            <div className="section-header">
+              <h2 className="section-title">Provider Credentials</h2>
+              <button
+                className="btn btn-primary"
+                onClick={handleRunVerification}
+                disabled={isRunning}
+              >
+                <RefreshCw size={16} className={isRunning ? 'spinning' : ''} />
+                {isRunning ? 'Verifying...' : 'Run Verification'}
+              </button>
+            </div>
 
-      {/* Watch Live Modal */}
-      <WatchLiveModal
-        isOpen={watchLiveModalOpen}
-        onClose={() => setWatchLiveModalOpen(false)}
-        agents={Object.entries(agentProgress).map(([type, progress]) => ({
-          name: type.replace(/([A-Z])/g, ' $1').trim(),
-          status: progress.status || 'pending',
-          logs: agentLogs.filter(log => log.agent === type).map(log => ({
-            message: log.message,
-            status: log.status,
-            time: log.time
-          })),
-          result: progress.data
-        }))}
-        logs={agentLogs}
-      />
-    </div>
+            <div className="provider-grid">
+              {providers.map((provider, index) => (
+                <motion.div
+                  key={provider.id}
+                  className="provider-card-detailed"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                  {/* Provider Header */}
+                  <div className="provider-card-header">
+                    <div className="provider-avatar">
+                      {provider.credentials}
+                    </div>
+                    <div className="provider-info">
+                      <h3 className="provider-name">{provider.name}</h3>
+                      <p className="provider-specialty">{provider.specialty}</p>
+                    </div>
+                    {provider.verified && (
+                      <div className="verification-badge success">
+                        <CheckCircle size={16} />
+                        VERIFIED
+                      </div>
+                    )}
+                  </div>
+
+                  {/* NPI Section */}
+                  <div className="credential-section">
+                    <div className="credential-section-header">
+                      <FileCheck size={16} />
+                      <span>NPI Registry</span>
+                      {provider.npiVerified && <CheckCircle size={14} className="text-green" />}
+                    </div>
+                    {provider.npiData ? (
+                      <div className="credential-details">
+                        <div className="detail-row">
+                          <span className="detail-label">NPI Number</span>
+                          <span className="detail-value">{provider.npiData.npi}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Taxonomy</span>
+                          <span className="detail-value">{provider.npiData.taxonomy}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Status</span>
+                          <span className={`detail-value ${getStatusColor(provider.npiData.status)}`}>
+                            {provider.npiData.status}
+                          </span>
+                        </div>
+                        {provider.npiData.address && (
+                          <div className="detail-row">
+                            <MapPin size={14} className="detail-icon" />
+                            <span className="detail-value small">{provider.npiData.address}</span>
+                          </div>
+                        )}
+                        {provider.npiData.phone && (
+                          <div className="detail-row">
+                            <Phone size={14} className="detail-icon" />
+                            <span className="detail-value small">{provider.npiData.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="credential-placeholder">Click "Run Verification" to check</p>
+                    )}
+                  </div>
+
+                  {/* License Section */}
+                  <div className="credential-section">
+                    <div className="credential-section-header">
+                      <Shield size={16} />
+                      <span>TX Medical Board</span>
+                      {provider.licenseVerified && <CheckCircle size={14} className="text-green" />}
+                    </div>
+                    {provider.licenseData ? (
+                      <div className="credential-details">
+                        <div className="detail-row">
+                          <span className="detail-label">License Number</span>
+                          <span className="detail-value">{provider.licenseData.license_number}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Status</span>
+                          <span className={`detail-value ${getStatusColor(provider.licenseData.license_status)}`}>
+                            {provider.licenseData.license_status}
+                          </span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Expires</span>
+                          <span className="detail-value">{formatDate(provider.licenseData.expiration_date)}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Issued</span>
+                          <span className="detail-value">{formatDate(provider.licenseData.issue_date)}</span>
+                        </div>
+                        {provider.licenseData.medical_school && (
+                          <div className="detail-row">
+                            <Building size={14} className="detail-icon" />
+                            <span className="detail-value small">{provider.licenseData.medical_school}</span>
+                          </div>
+                        )}
+                        <div className="detail-row disciplinary">
+                          <span className="detail-label">Disciplinary Actions</span>
+                          <span className="detail-value text-green">
+                            {provider.licenseData.disciplinary_actions || 'None'}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="credential-placeholder">Click "Run Verification" to check</p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Scalability Section */}
+          {providers.some(p => p.verified) && (
+            <div className="section">
+              <div className="scalability-banner">
+                <div className="scalability-content">
+                  <h3>Scale to Thousands of Providers</h3>
+                  <p>
+                    This demo verifies 2 providers in ~8 seconds. TinyFish can parallelize to verify
+                    100+ providers simultaneously, completing 1,000 provider credentialing checks in under 2 minutes.
+                  </p>
+                </div>
+                <div className="scalability-stats-inline">
+                  <div className="stat-inline">
+                    <div className="stat-inline-value">2</div>
+                    <div className="stat-inline-label">~8 sec</div>
+                  </div>
+                  <div className="stat-arrow">→</div>
+                  <div className="stat-inline">
+                    <div className="stat-inline-value">100</div>
+                    <div className="stat-inline-label">~15 sec</div>
+                  </div>
+                  <div className="stat-arrow">→</div>
+                  <div className="stat-inline">
+                    <div className="stat-inline-value">1,000</div>
+                    <div className="stat-inline-label">~2 min</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Agent Panel Sidebar */}
+        {showAgentPanel && (
+          <AgentPanel
+            onRefresh={handleRunVerification}
+            drugName="Provider Credentials"
+          />
+        )}
+      </div>
+    </motion.div>
   );
 };
 

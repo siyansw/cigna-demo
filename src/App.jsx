@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import PasswordScreen from './components/PasswordScreen';
 import LandingMenu from './components/LandingMenu';
 import CredentialDashboard from './components/CredentialDashboard';
-import PTDashboard from './components/PTDashboard';
+import Dashboard from './components/Dashboard';
 import './App.css';
 
 function App() {
@@ -42,7 +42,7 @@ function App() {
           />
         )}
         {currentView === 'pt-intelligence' && (
-          <PTDashboard
+          <Dashboard
             key="pt-dashboard"
             onBack={handleBack}
           />
