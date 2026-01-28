@@ -83,7 +83,10 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRu
 
   const runAgents = async () => {
     setIsRunning(true);
-    onRunningChange?.(true);
+    // Defer to avoid setState during render
+    setTimeout(() => {
+      onRunningChange?.(true);
+    }, 0);
     setLogs([]);
     setExecutionTime(0);
     setStreamingUrls({});
@@ -117,8 +120,10 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRu
           } : a
         ));
 
-        // Notify parent of progress
-        onProgressUpdate?.({ [agentType]: progress });
+        // Notify parent of progress (deferred to avoid setState during render)
+        setTimeout(() => {
+          onProgressUpdate?.({ [agentType]: progress });
+        }, 0);
 
         // Capture streaming URL
         if (progress.streamingUrl) {
@@ -165,7 +170,10 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRu
         clearInterval(timer);
         setExecutionTime(Math.floor((Date.now() - startTime) / 1000));
         setIsRunning(false);
-        onRunningChange?.(false);
+        // Defer to avoid setState during render
+        setTimeout(() => {
+          onRunningChange?.(false);
+        }, 0);
 
         // Handle errors
         Object.keys(errors).forEach(agentType => {
@@ -213,7 +221,10 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRu
     const newLog = { time: new Date(), message };
     setLogs(prev => {
       const updated = [...prev, newLog];
-      onLogsUpdate?.(updated);
+      // Defer callback to avoid setState during render
+      setTimeout(() => {
+        onLogsUpdate?.(updated);
+      }, 0);
       return updated;
     });
   };
