@@ -47,8 +47,13 @@ const Dashboard = ({ onNavigate, onBack }) => {
 
   const handleNewsUpdate = (newsData) => {
     console.log('📰 Dashboard received news update:', newsData);
+    console.log('📰 newsData type:', typeof newsData);
+    console.log('📰 newsData keys:', newsData ? Object.keys(newsData) : 'null');
 
-    if (!newsData) return;
+    if (!newsData) {
+      console.warn('⚠️ newsData is null/undefined, returning');
+      return;
+    }
 
     // Handle different possible data structures from TinyFish API
     let newsArray = [];
@@ -79,12 +84,13 @@ const Dashboard = ({ onNavigate, onBack }) => {
     if (newsArray.length > 0) {
       const formattedNews = newsArray.slice(0, 5).map(item => ({
         headline: item.headline || item.title || item.brief_summary || item['brief summary'] || item.summary || 'News update',
-        time: item.date || item.time || item.timestamp || 'Recent',
+        time: item.published_time || item.date || item.time || item.timestamp || 'Recent',
         type: (item.headline || item.title || '')?.toLowerCase().includes('fda') ? 'info' : 'warning',
         source: item.source || item.publisher || 'TinyFish Agent'
       }));
 
       console.log('✓ Formatted news headlines:', formattedNews);
+      console.log('✓ Setting newsIsLive to true and updating newsHeadlines');
       setNewsHeadlines(formattedNews);
       setNewsIsLive(true);
     }

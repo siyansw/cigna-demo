@@ -96,7 +96,8 @@ const CredentialAgentPanel = ({ providers, isRunning, agentProgress, onWatchLive
 
       <div className="agents-list">
         {agents.map(agent => {
-          const hasStream = agent.streamingUrl && MODE === 'live';
+          // Show Watch Live if streamingUrl exists (works in both demo and live mode)
+          const hasStream = !!agent.streamingUrl;
 
           if (hasStream) {
             console.log(`✅ Agent ${agent.name} has stream:`, agent.streamingUrl);

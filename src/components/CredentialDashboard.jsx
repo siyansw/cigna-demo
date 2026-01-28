@@ -15,7 +15,8 @@ import {
   MapPin,
   Phone,
   Building,
-  Video
+  Video,
+  Bot
 } from 'lucide-react';
 import { providers as initialProviders } from '../data/providers';
 import { runMultipleAgents } from '../services/minoApi';
@@ -204,6 +205,58 @@ const CredentialDashboard = ({ onBack }) => {
     });
   };
 
+  // Generate AI-powered insights
+  const generateInsights = () => {
+    const insights = [];
+
+    const verifiedCount = providers.filter(p => p.verified).length;
+    const activeCount = providers.filter(p => p.licenseData?.license_status === 'Active').length;
+
+    // Credential mix
+    const credentialCounts = {};
+    providers.forEach(p => {
+      const cred = p.npiData?.credentials || p.credentials;
+      credentialCounts[cred] = (credentialCounts[cred] || 0) + 1;
+    });
+    const credMix = Object.entries(credentialCounts).map(([k, v]) => `${v} ${k}`).join(', ');
+
+    // Disciplinary status
+    const hasDisciplinary = providers.some(p =>
+      p.licenseData?.disciplinary_actions &&
+      p.licenseData.disciplinary_actions !== 'None'
+    );
+
+    // License expiration analysis
+    const expiringCount = providers.filter(p => {
+      if (!p.licenseData?.expiration_date) return false;
+      const expDate = new Date(p.licenseData.expiration_date);
+      const sixMonths = new Date();
+      sixMonths.setMonth(sixMonths.getMonth() + 6);
+      return expDate < sixMonths;
+    }).length;
+
+    // Build insights
+    if (verifiedCount === providers.length) {
+      insights.push('✓ All providers fully verified with active credentials');
+    } else {
+      insights.push(`⚠ ${verifiedCount}/${providers.length} providers verified`);
+    }
+
+    insights.push(`Provider mix: ${credMix}`);
+
+    if (!hasDisciplinary) {
+      insights.push('✓ No disciplinary actions on file');
+    } else {
+      insights.push('⚠ Review disciplinary history');
+    }
+
+    if (expiringCount > 0) {
+      insights.push(`⚠ ${expiringCount} license(s) expiring within 6 months`);
+    }
+
+    return insights;
+  };
+
   return (
     <motion.div
       className="dashboard"
@@ -306,6 +359,41 @@ const CredentialDashboard = ({ onBack }) => {
                   <RefreshCw size={16} className={isRunning ? 'spinning' : ''} />
                   {isRunning ? 'Verifying...' : 'Run Verification'}
                 </button>
+              </div>
+            </div>
+
+            {/* AI-Powered Insights */}
+            <div className="dashboard-card" style={{
+              marginTop: '1.5rem',
+              marginBottom: '1.5rem',
+              background: 'linear-gradient(135deg, rgba(0, 212, 170, 0.05), rgba(0, 170, 212, 0.05))',
+              border: '1px solid rgba(0, 212, 170, 0.2)'
+            }}>
+              <div className="card-header-row" style={{ borderBottom: '1px solid rgba(0, 212, 170, 0.2)' }}>
+                <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Bot size={20} className="text-cyan" />
+                  AI-Powered Insights
+                </h3>
+              </div>
+              <div style={{
+                padding: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem'
+              }}>
+                {generateInsights().map((insight, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      fontSize: '0.95rem',
+                      color: 'var(--text-primary)',
+                      fontWeight: '500',
+                      lineHeight: '1.5'
+                    }}
+                  >
+                    {insight}
+                  </div>
+                ))}
               </div>
             </div>
 

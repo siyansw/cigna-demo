@@ -140,6 +140,8 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRu
         }
       },
       onAgentComplete: (agentType, result) => {
+        console.log(`🔔 onAgentComplete called for: ${agentType}`, result);
+
         // Update agent status to complete
         setAgents(prev => prev.map(a =>
           a.id === agentType ? {
@@ -153,9 +155,19 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRu
         addLog(`✓ ${getAgentName(agentType)}: Completed successfully`);
 
         // Handle news agent completion - update dashboard
+        console.log(`🔍 Checking news update: agentType=${agentType}, hasData=${!!result.data}, hasCallback=${!!onNewsUpdate}`);
         if (agentType === 'ptNews' && result.data && onNewsUpdate) {
           console.log('📰 ptNews agent completed with data:', result.data);
+          console.log('📰 Calling onNewsUpdate callback...');
           onNewsUpdate(result.data);
+          console.log('📰 onNewsUpdate callback completed');
+        } else if (agentType === 'ptNews') {
+          console.warn('⚠️ ptNews agent completed but callback not triggered:', {
+            agentType,
+            hasData: !!result.data,
+            hasCallback: !!onNewsUpdate,
+            resultKeys: result ? Object.keys(result) : 'null'
+          });
         }
 
         // Update stats
@@ -170,6 +182,8 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRu
         clearInterval(timer);
         setExecutionTime(Math.floor((Date.now() - startTime) / 1000));
         setIsRunning(false);
+        // Clear streaming URLs so Watch Live buttons disappear
+        setStreamingUrls({});
         // Defer to avoid setState during render
         setTimeout(() => {
           onRunningChange?.(false);
@@ -271,7 +285,8 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRu
 
       <div className="agents-list">
         {agents.map(agent => {
-          const hasStream = streamingUrls[agent.id] && MODE === 'live';
+          // Show Watch Live if streamingUrl exists (works in both demo and live mode)
+          const hasStream = !!streamingUrls[agent.id];
 
           return (
             <div

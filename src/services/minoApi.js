@@ -15,12 +15,46 @@ const CREDENTIAL_AGENTS = {
   npiRegistry: {
     name: 'NPI Registry Agent',
     url: 'https://npiregistry.cms.hhs.gov/search',
-    getGoal: (npiNumber) => `Search for NPI number ${npiNumber}. Extract the following data and respond in JSON format: {"npi": "number", "name": "full name", "credentials": "MD/DO/PA/NP", "taxonomy": "specialty description", "address": "practice address", "phone": "phone number", "status": "active/inactive"}`
+    getGoal: (npiNumber) => `
+Step 1: Enter the NPI number "${npiNumber}" into the search field on the page.
+Step 2: Click the search button to submit the query.
+Step 3: Wait for the search results to load.
+Step 4: From the first matching result, extract the following information:
+- NPI number
+- Provider full name
+- Credentials/degree (MD, DO, PA-C, NP, etc.)
+- Primary taxonomy/specialty
+- Practice address (full mailing address)
+- Phone number
+- Enumeration status (Active or Deactive)
+
+Step 5: Return the data in this exact JSON format:
+{"npi": "1234567890", "name": "John Doe", "credentials": "MD", "taxonomy": "Family Medicine", "address": "123 Main St, City, ST 12345", "phone": "(555) 123-4567", "status": "Active"}
+`.trim()
   },
   texasMedicalBoard: {
     name: 'Texas Medical Board Agent',
     url: 'https://profile.tmb.state.tx.us/',
-    getGoal: (lastName, firstName) => `Search for physician with last name ${lastName} and first name ${firstName}. Click on the matching result. Extract the following data and respond in JSON format: {"license_number": "TMB license number", "license_status": "Active/Inactive/Suspended", "issue_date": "YYYY-MM-DD", "expiration_date": "YYYY-MM-DD", "disciplinary_actions": "None/Description", "medical_school": "school name"}`
+    getGoal: (lastName, firstName) => `
+Step 1: On the Texas Medical Board license search page, enter the following information:
+- Last Name: ${lastName}
+- First Name: ${firstName}
+
+Step 2: Click the search button and wait for results.
+
+Step 3: If multiple results appear, click on the first exact match for "${firstName} ${lastName}".
+
+Step 4: On the provider's profile page, extract the following information:
+- License number (starts with M, PA, or AP)
+- License status (Active, Inactive, Suspended, Revoked, etc.)
+- Original issue date (format: YYYY-MM-DD)
+- Expiration date (format: YYYY-MM-DD)
+- Disciplinary actions (look for "No disciplinary orders on file" or list any actions found)
+- Medical school name
+
+Step 5: Return the data in this exact JSON format:
+{"license_number": "M12345", "license_status": "Active", "issue_date": "2015-01-15", "expiration_date": "2027-12-31", "disciplinary_actions": "None", "medical_school": "University of Texas Medical School"}
+`.trim()
   },
   credentialNews: {
     name: 'Credential News Agent',
@@ -58,25 +92,43 @@ const SIMULATED_CREDENTIAL_DATA = {
   npiRegistry: {
     '1821089041': {
       npi: '1821089041',
-      name: 'Maria Rodriguez',
+      name: 'Sarah Chen',
       credentials: 'MD',
-      taxonomy: 'Family Medicine',
+      taxonomy: 'Cardiology',
       address: '123 Medical Plaza, Austin, TX 78701',
       phone: '(512) 555-0100',
       status: 'Active'
     },
     '1033226892': {
       npi: '1033226892',
-      name: 'David Kim',
-      credentials: 'PA-C',
-      taxonomy: 'Physician Assistant',
+      name: 'Michael Johnson',
+      credentials: 'DO',
+      taxonomy: 'Internal Medicine',
       address: '456 Healthcare Drive, Houston, TX 77002',
       phone: '(713) 555-0200',
+      status: 'Active'
+    },
+    '1245319876': {
+      npi: '1245319876',
+      name: 'Jessica Williams',
+      credentials: 'NP',
+      taxonomy: 'Nurse Practitioner - Family',
+      address: '789 Health Center Blvd, Dallas, TX 75201',
+      phone: '(214) 555-0300',
+      status: 'Active'
+    },
+    '1356782945': {
+      npi: '1356782945',
+      name: 'Robert Anderson',
+      credentials: 'MD',
+      taxonomy: 'Emergency Medicine',
+      address: '321 Emergency Dr, San Antonio, TX 78205',
+      phone: '(210) 555-0400',
       status: 'Active'
     }
   },
   texasMedicalBoard: {
-    'Rodriguez-Maria': {
+    'Chen-Sarah': {
       license_number: 'M12345',
       license_status: 'Active',
       issue_date: '2015-01-15',
@@ -84,13 +136,29 @@ const SIMULATED_CREDENTIAL_DATA = {
       disciplinary_actions: 'None',
       medical_school: 'University of Texas Medical School'
     },
-    'Kim-David': {
-      license_number: 'PA9876',
+    'Johnson-Michael': {
+      license_number: 'DO9876',
       license_status: 'Active',
       issue_date: '2018-06-20',
       expiration_date: '2026-06-30',
       disciplinary_actions: 'None',
-      medical_school: 'Baylor PA Program'
+      medical_school: 'Baylor College of Medicine'
+    },
+    'Williams-Jessica': {
+      license_number: 'NP54321',
+      license_status: 'Active',
+      issue_date: '2019-03-10',
+      expiration_date: '2027-03-31',
+      disciplinary_actions: 'None',
+      medical_school: 'University of Texas School of Nursing'
+    },
+    'Anderson-Robert': {
+      license_number: 'M67890',
+      license_status: 'Active',
+      issue_date: '2012-08-15',
+      expiration_date: '2026-08-31',
+      disciplinary_actions: 'None',
+      medical_school: 'Johns Hopkins School of Medicine'
     }
   }
 };
@@ -132,6 +200,8 @@ const SIMULATED_PT_DATA = {
  * Simulate agent execution for demo mode
  */
 const runSimulatedAgent = async (agentType, params, { onProgress, onComplete, onError }) => {
+  console.log(`🎭 runSimulatedAgent called: ${agentType}`, params);
+
   const isCredentialAgent = CREDENTIAL_AGENTS[agentType];
   const isPTAgent = PT_AGENTS[agentType];
 
@@ -187,16 +257,35 @@ const runSimulatedAgent = async (agentType, params, { onProgress, onComplete, on
     let result;
     if (isCredentialAgent) {
       if (agentType === 'npiRegistry') {
+        console.log(`🔍 Looking up NPI: ${params.npiNumber}`);
+        console.log(`🔍 Available NPIs:`, Object.keys(SIMULATED_CREDENTIAL_DATA.npiRegistry));
         result = SIMULATED_CREDENTIAL_DATA.npiRegistry[params.npiNumber];
+        if (result) {
+          console.log(`✅ Found NPI data:`, result);
+        } else {
+          console.warn(`⚠️ No simulated NPI data found for: ${params.npiNumber}`);
+        }
       } else if (agentType === 'texasMedicalBoard') {
         const key = `${params.lastName}-${params.firstName}`;
+        console.log(`🔍 Looking up TMB with key: ${key}`);
+        console.log(`🔍 Available TMB keys:`, Object.keys(SIMULATED_CREDENTIAL_DATA.texasMedicalBoard));
         result = SIMULATED_CREDENTIAL_DATA.texasMedicalBoard[key];
+        if (result) {
+          console.log(`✅ Found TMB data:`, result);
+        } else {
+          console.warn(`⚠️ No simulated TMB data found for key: ${key}`);
+        }
       }
     } else if (isPTAgent) {
       result = SIMULATED_PT_DATA[agentType];
+      if (!result) {
+        console.warn(`⚠️ No simulated P&T data found for: ${agentType}`);
+      }
     }
 
-    // Complete
+    console.log(`🎭 Completing ${agentType} with result:`, result ? 'DATA FOUND' : 'NO DATA');
+
+    // Complete (even if result is undefined, we still complete successfully)
     await sleep(500);
     onComplete?.({
       status: 'completed',
