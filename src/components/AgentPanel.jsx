@@ -23,68 +23,48 @@ import './AgentPanel.css';
 const MODE = minoApi.MODE;
 
 const AGENT_ICONS = {
-  evidence: Database,
-  guidelines: FileText,
-  safety: AlertTriangle,
-  comparator: Users,
-  formulary: Search,
-  news: Newspaper
+  fda: FileText,
+  clinicalTrials: Database,
+  pubmed: Search,
+  ptNews: Newspaper
 };
 
 const initialAgents = [
   {
-    id: 'evidence',
-    name: 'Evidence Gathering',
-    icon: Database,
-    status: 'complete',
-    progress: 100,
-    result: '23 trials found',
-    details: 'Searched PubMed, ClinicalTrials.gov for Phase 3 trials'
-  },
-  {
-    id: 'guidelines',
-    name: 'Guideline Monitoring',
+    id: 'fda',
+    name: 'FDA Agent',
     icon: FileText,
     status: 'complete',
     progress: 100,
-    result: '4 guidelines checked',
-    details: 'ADA, ACC/AHA, AACE, ESC guidelines analyzed'
+    result: 'Approval data found',
+    details: 'Searched FDA Drugs@FDA database for approval history'
   },
   {
-    id: 'comparator',
-    name: 'Comparator Intelligence',
-    icon: Users,
+    id: 'clinicalTrials',
+    name: 'Clinical Trials Agent',
+    icon: Database,
     status: 'complete',
     progress: 100,
-    result: '6 drugs compared',
-    details: 'Head-to-head trial data extracted and normalized'
+    result: '3 trials found',
+    details: 'Searched ClinicalTrials.gov for Phase 3 trials'
   },
   {
-    id: 'safety',
-    name: 'Safety Surveillance',
-    icon: AlertTriangle,
-    status: 'complete',
-    progress: 100,
-    result: '0 active alerts',
-    details: 'FDA MedWatch, FAERS database checked'
-  },
-  {
-    id: 'formulary',
-    name: 'Peer Formulary',
+    id: 'pubmed',
+    name: 'PubMed Agent',
     icon: Search,
     status: 'complete',
     progress: 100,
-    result: '12 plans surveyed',
-    details: 'Medicare Part D, major PBM formularies analyzed'
+    result: '3 publications found',
+    details: 'Searched PubMed for cardiovascular outcomes studies'
   },
   {
-    id: 'news',
-    name: 'News Intelligence',
+    id: 'ptNews',
+    name: 'P&T News Agent',
     icon: Newspaper,
     status: 'complete',
     progress: 100,
-    result: '5 headlines gathered',
-    details: 'GLP-1 clinical & regulatory news from past 7 days'
+    result: 'News gathered',
+    details: 'FDA drug approval and formulary news from past 7 days'
   }
 ];
 
@@ -121,8 +101,9 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate }) =>
 
     addLog(`Starting agent execution for ${drugName}...`);
 
-    // Run TinyFish agents
-    const agentTypes = ['evidence', 'guidelines', 'comparator', 'safety', 'formulary', 'news'];
+    // Run Mino agents for P&T
+    const agentTypes = ['fda', 'clinicalTrials', 'pubmed', 'ptNews'];
+    console.log('🚀 AgentPanel running agent types:', agentTypes);
 
     await runMultipleAgents(agentTypes, drugName, {
       onAgentProgress: (agentType, progress) => {
@@ -210,18 +191,14 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate }) =>
     if (!data) return 'Completed';
 
     switch (agentType) {
-      case 'evidence':
-        return `${data.trials?.length || data.count || 23} trials found`;
-      case 'guidelines':
-        return `${data.guidelines?.length || data.count || 4} guidelines checked`;
-      case 'comparator':
-        return `${data.comparisons?.length || data.count || 6} drugs compared`;
-      case 'safety':
-        return `${data.alerts?.length || 0} active alerts`;
-      case 'formulary':
-        return `${data.plans?.length || data.count || 12} plans surveyed`;
-      case 'news':
-        return `${data.headlines?.length || data.count || 5} headlines gathered`;
+      case 'fda':
+        return `${data.approval_dates?.length || 2} approvals found`;
+      case 'clinicalTrials':
+        return `${data.trials?.length || 3} trials found`;
+      case 'pubmed':
+        return `${data.publications?.length || 3} publications found`;
+      case 'ptNews':
+        return `${data.news?.length || data.headlines?.length || 5} headlines gathered`;
       default:
         return 'Completed';
     }
