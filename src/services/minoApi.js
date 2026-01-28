@@ -333,11 +333,36 @@ export const runAgent = async (agentType, params, { onProgress, onComplete, onEr
 
 /**
  * Run multiple agents concurrently
+ * Supports both new format (agentConfigs array) and old format (agentTypes array with drugName)
  */
 export const runMultipleAgents = async (
-  agentConfigs,
-  { onAgentProgress, onAgentComplete, onAllComplete }
+  agentConfigsOrTypes,
+  drugNameOrCallbacks,
+  callbacksOrUndefined
 ) => {
+  let agentConfigs;
+  let callbacks;
+
+  // Detect which format is being used
+  if (Array.isArray(agentConfigsOrTypes) && agentConfigsOrTypes.length > 0) {
+    if (typeof agentConfigsOrTypes[0] === 'string') {
+      // OLD FORMAT: runMultipleAgents(['evidence', 'guidelines'], 'Semaglutide', {callbacks})
+      const agentTypes = agentConfigsOrTypes;
+      const drugName = drugNameOrCallbacks;
+      callbacks = callbacksOrUndefined;
+
+      // Convert to new format for P&T agents
+      agentConfigs = agentTypes.map(type => ({
+        agentType: type,
+        params: { drugName }
+      }));
+    } else {
+      // NEW FORMAT: runMultipleAgents([{agentType, params}], {callbacks})
+      agentConfigs = agentConfigsOrTypes;
+      callbacks = drugNameOrCallbacks;
+    }
+  }
+
   const results = {};
   const errors = {};
   let completedCount = 0;
@@ -345,15 +370,15 @@ export const runMultipleAgents = async (
   const agentPromises = agentConfigs.map(({ agentType, params }) => {
     return runAgent(agentType, params, {
       onProgress: (progress) => {
-        onAgentProgress?.(agentType, progress);
+        callbacks?.onAgentProgress?.(agentType, progress);
       },
       onComplete: (result) => {
         results[agentType] = result.data;
         completedCount++;
-        onAgentComplete?.(agentType, result);
+        callbacks?.onAgentComplete?.(agentType, result);
 
         if (completedCount === agentConfigs.length) {
-          onAllComplete?.({ results, errors });
+          callbacks?.onAllComplete?.({ results, errors });
         }
       },
       onError: (error) => {
@@ -361,7 +386,7 @@ export const runMultipleAgents = async (
         completedCount++;
 
         if (completedCount === agentConfigs.length) {
-          onAllComplete?.({ results, errors });
+          callbacks?.onAllComplete?.({ results, errors });
         }
       }
     });
