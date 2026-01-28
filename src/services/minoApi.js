@@ -8,6 +8,7 @@ console.log('🔍 Mino API Configuration:');
 console.log('  - MODE:', MODE);
 console.log('  - API URL:', MINO_API_URL);
 console.log('  - API Key:', MINO_API_KEY ? '✓ Set' : '✗ Missing');
+console.log('  - Using:', MODE === 'live' ? '🔴 LIVE API CALLS' : '📊 DEMO MODE (simulated data)');
 
 // Agent configuration for credential verification
 const CREDENTIAL_AGENTS = {
