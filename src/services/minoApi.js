@@ -118,6 +118,13 @@ const SIMULATED_PT_DATA = {
       { title: 'Once-Weekly Semaglutide in Adults with Overweight or Obesity', journal: 'NEJM', year: 2021, pmid: '33567185' },
       { title: 'Effect of Semaglutide on Heart Failure Outcomes', journal: 'Circulation', year: 2023, pmid: '37823286' }
     ]
+  },
+  ptNews: {
+    news: [
+      { headline: 'FDA Approves New GLP-1 Indication', source: 'FDA News', published_time: '2 hours ago', summary: 'FDA expands indication for cardiovascular risk reduction...', url: 'https://www.fda.gov' },
+      { headline: 'Major Payer Adds GLP-1 to Formulary', source: 'Healthcare News', published_time: '5 hours ago', summary: 'United Healthcare expands coverage for weight management drugs...', url: 'https://example.com' },
+      { headline: 'New Clinical Guidelines for Obesity Treatment', source: 'AMA', published_time: '1 day ago', summary: 'American Medical Association updates obesity treatment guidelines...', url: 'https://www.ama-assn.org' }
+    ]
   }
 };
 
