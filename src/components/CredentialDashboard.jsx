@@ -196,7 +196,7 @@ const CredentialDashboard = ({ onBack }) => {
                 <TrendingUp size={20} />
               </div>
               <div className="stat-content">
-                <div className="stat-value">~8s</div>
+                <div className="stat-value">~12s</div>
                 <div className="stat-label">Avg Time</div>
               </div>
             </div>
