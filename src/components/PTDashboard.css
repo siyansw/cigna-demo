@@ -1,7 +1,7 @@
 .pt-dashboard {
   min-height: 100vh;
   background: var(--bg-primary);
-  padding: 2rem;
+  padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -12,17 +12,17 @@
 
 .pt-hero {
   text-align: center;
-  margin-bottom: 3rem;
-  padding: 3rem 2rem;
+  margin-bottom: 2rem;
+  padding: 2rem 1.5rem;
   background: var(--gradient-card);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
 }
 
 .pt-title {
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   letter-spacing: -0.02em;
 }
 
@@ -46,13 +46,13 @@
 }
 
 .drug-name {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--accent-cyan);
 }
 
 .drug-brand {
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: var(--text-secondary);
   font-weight: 500;
 }
@@ -86,16 +86,16 @@
 
 .review-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .review-card {
   background: var(--gradient-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  padding: 2rem;
+  border-radius: 12px;
+  padding: 1.25rem;
   transition: all 0.3s ease;
 }
 
@@ -107,9 +107,9 @@
 .review-card-header {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -119,14 +119,14 @@
 }
 
 .card-title {
-  font-size: 1.25rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
 .card-subtitle {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
@@ -147,8 +147,8 @@
 .approval-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: 0.625rem;
+  padding: 0.75rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
@@ -214,7 +214,7 @@
 
 /* Clinical Trials Styles */
 .trial-item {
-  padding: 1rem;
+  padding: 0.75rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
@@ -272,7 +272,7 @@
 
 /* Publication Styles */
 .publication-item {
-  padding: 1rem;
+  padding: 0.75rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;

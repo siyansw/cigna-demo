@@ -61,13 +61,13 @@ const PTDashboard = ({ onBack }) => {
   }, []);
 
   const handleRunReview = async () => {
+    console.log('🚀 Starting PT Clinical Review...');
     setIsRunning(true);
     setShowWatchLive(true);
     setAgentLogs([]);
     setAgentProgress({});
 
     const startTime = Date.now();
-    const results = {};
 
     // Prepare agent configurations
     const agentConfigs = [
@@ -76,9 +76,13 @@ const PTDashboard = ({ onBack }) => {
       { agentType: 'pubmed', params: { drugName } }
     ];
 
+    console.log('📋 Agent configs:', agentConfigs);
+
     // Run all agents in parallel
     await runMultipleAgents(agentConfigs, {
       onAgentProgress: (agentType, progress) => {
+        console.log(`📊 ${agentType} progress:`, progress.message);
+
         setAgentProgress(prev => ({
           ...prev,
           [agentType]: progress
@@ -92,18 +96,21 @@ const PTDashboard = ({ onBack }) => {
         }]);
       },
       onAgentComplete: (agentType, result) => {
-        console.log(`✓ ${agentType} completed:`, result.data);
-        results[agentType] = result.data;
+        console.log(`✅ ${agentType} completed with data:`, result.data);
       },
       onAllComplete: ({ results: allResults, errors }) => {
         const executionTime = ((Date.now() - startTime) / 1000).toFixed(1);
-        console.log(`All agents complete in ${executionTime}s`);
+        console.log(`🏁 All agents complete in ${executionTime}s`);
+        console.log('📦 Results:', allResults);
+        console.log('❌ Errors:', errors);
 
         // Merge results with demo guideline data
         const finalData = {
           ...demoReviewData,
           ...allResults
         };
+
+        console.log('💾 Final data to display:', finalData);
 
         setReviewData(finalData);
         setIsRunning(false);
