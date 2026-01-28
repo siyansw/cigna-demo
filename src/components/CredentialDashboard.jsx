@@ -332,6 +332,55 @@ const CredentialDashboard = ({ onBack }) => {
             </div>
           </div>
 
+          {/* Alerts Section */}
+          {providers.some(p => p.verified) && (
+            <div className="section">
+              <div className="section-header">
+                <h2 className="section-title">Alerts & Notifications</h2>
+              </div>
+              <div className="alerts-grid">
+                {providers.filter(p => p.licenseData).map(provider => {
+                  const expirationDate = new Date(provider.licenseData.expiration_date);
+                  const today = new Date();
+                  const daysUntilExpiration = Math.floor((expirationDate - today) / (1000 * 60 * 60 * 24));
+                  const isExpiringSoon = daysUntilExpiration < 180;
+
+                  if (!isExpiringSoon) return null;
+
+                  return (
+                    <div key={provider.id} className="alert-card warning">
+                      <div className="alert-icon">
+                        <AlertTriangle size={20} />
+                      </div>
+                      <div className="alert-content">
+                        <div className="alert-title">License Expiring Soon</div>
+                        <div className="alert-message">
+                          {provider.name}'s {provider.licenseData.state} license expires in {daysUntilExpiration} days
+                        </div>
+                      </div>
+                      <div className="alert-badge warning">
+                        {daysUntilExpiration} days
+                      </div>
+                    </div>
+                  );
+                })}
+                {providers.filter(p => p.verified).length === providers.length && (
+                  <div className="alert-card success">
+                    <div className="alert-icon">
+                      <CheckCircle size={20} />
+                    </div>
+                    <div className="alert-content">
+                      <div className="alert-title">All Clear</div>
+                      <div className="alert-message">
+                        All {providers.length} providers have active credentials with no issues
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Scalability Section */}
           {providers.some(p => p.verified) && (
             <div className="section">
