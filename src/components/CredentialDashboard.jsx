@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Play, CheckCircle, AlertCircle, Clock, RefreshCw } from 'lucide-react';
 import { providers as initialProviders, demoProviderData } from '../data/providers';
+import NewsFeed from './NewsFeed';
 import './CredentialDashboard.css';
 
 const CredentialDashboard = ({ onBack }) => {
@@ -271,11 +272,8 @@ const CredentialDashboard = ({ onBack }) => {
         </motion.div>
       )}
 
-      {/* News Feed Placeholder */}
-      <div className="news-feed-placeholder">
-        <h3>📰 Industry News & Updates</h3>
-        <p>News feed will be integrated here</p>
-      </div>
+      {/* News Feed */}
+      <NewsFeed type="credential" />
     </div>
   );
 };
