@@ -78,10 +78,22 @@ const CredentialDashboard = ({ onBack }) => {
     const agentConfigs = [];
     providers.forEach((provider) => {
       const nameParts = provider.name.split(' ');
+
+      // Skip titles like "Dr." when extracting first name
+      const titles = ['Dr.', 'Dr', 'Mr.', 'Mrs.', 'Ms.', 'Miss'];
+      let firstName = nameParts[0];
+      let nameStartIndex = 0;
+
+      // If first part is a title, use the next part as first name
+      if (titles.includes(nameParts[0])) {
+        firstName = nameParts[1] || nameParts[0];
+        nameStartIndex = 1;
+      }
+
       const lastName = nameParts[nameParts.length - 1];
-      const firstName = nameParts[0];
 
       console.log(`  → Creating agents for ${provider.name} (ID: ${provider.id})`);
+      console.log(`  → Parsed: firstName="${firstName}", lastName="${lastName}"`);
 
       // Use unique agentType identifiers that include provider ID
       agentConfigs.push({
