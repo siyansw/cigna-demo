@@ -68,7 +68,7 @@ const initialAgents = [
   }
 ];
 
-const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate }) => {
+const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRunningChange, onLogsUpdate, onProgressUpdate }) => {
   const [agents, setAgents] = useState(initialAgents);
   const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState(47);
@@ -83,6 +83,7 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate }) =>
 
   const runAgents = async () => {
     setIsRunning(true);
+    onRunningChange?.(true);
     setLogs([]);
     setExecutionTime(0);
     setStreamingUrls({});
@@ -115,6 +116,9 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate }) =>
             progress: progress.progress || 50
           } : a
         ));
+
+        // Notify parent of progress
+        onProgressUpdate?.({ [agentType]: progress });
 
         // Capture streaming URL
         if (progress.streamingUrl) {
@@ -161,6 +165,7 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate }) =>
         clearInterval(timer);
         setExecutionTime(Math.floor((Date.now() - startTime) / 1000));
         setIsRunning(false);
+        onRunningChange?.(false);
 
         // Handle errors
         Object.keys(errors).forEach(agentType => {
@@ -205,7 +210,12 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate }) =>
   };
 
   const addLog = (message) => {
-    setLogs(prev => [...prev, { time: new Date(), message }]);
+    const newLog = { time: new Date(), message };
+    setLogs(prev => {
+      const updated = [...prev, newLog];
+      onLogsUpdate?.(updated);
+      return updated;
+    });
   };
 
   const getStatusIcon = (status) => {

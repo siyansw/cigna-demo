@@ -13,7 +13,8 @@ import {
   TrendingDown,
   Minus,
   AlertTriangle,
-  Info
+  Info,
+  Video
 } from 'lucide-react';
 import {
   ScatterChart,
@@ -27,6 +28,7 @@ import {
 } from 'recharts';
 import { drugData, drugList, therapeuticClass } from '../data/drugs';
 import AgentPanel from './AgentPanel';
+import WatchLiveModal from './WatchLiveModal';
 import './Dashboard.css';
 
 const Dashboard = ({ onNavigate, onBack }) => {
@@ -38,6 +40,10 @@ const Dashboard = ({ onNavigate, onBack }) => {
     { headline: 'Medicare coverage expansion for GLP-1 medications announced', time: '1 day ago', type: 'warning' }
   ]);
   const [newsIsLive, setNewsIsLive] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [watchLiveModalOpen, setWatchLiveModalOpen] = useState(false);
+  const [agentLogs, setAgentLogs] = useState([]);
+  const [agentProgress, setAgentProgress] = useState({});
 
   const handleNewsUpdate = (newsData) => {
     console.log('📰 Dashboard received news update:', newsData);
@@ -145,6 +151,15 @@ const Dashboard = ({ onNavigate, onBack }) => {
             <Clock size={14} />
             <span>Last Updated: {lastUpdated.toLocaleTimeString()}</span>
           </div>
+          {isRunning && (
+            <button
+              className="btn btn-primary"
+              onClick={() => setWatchLiveModalOpen(true)}
+            >
+              <Video size={16} />
+              Watch Live
+            </button>
+          )}
           <button
             className="btn btn-secondary"
             onClick={() => setShowAgentPanel(!showAgentPanel)}
@@ -378,9 +393,36 @@ const Dashboard = ({ onNavigate, onBack }) => {
           <AgentPanel
             onRefresh={() => setLastUpdated(new Date())}
             onNewsUpdate={handleNewsUpdate}
+            onRunningChange={setIsRunning}
+            onLogsUpdate={setAgentLogs}
+            onProgressUpdate={(progress) => {
+              setAgentProgress(prev => ({ ...prev, ...progress }));
+            }}
           />
         )}
       </div>
+
+      {/* Watch Live Modal */}
+      <WatchLiveModal
+        isOpen={watchLiveModalOpen}
+        onClose={() => setWatchLiveModalOpen(false)}
+        agents={Object.entries(agentProgress).map(([type, progress]) => ({
+          name: type.replace(/([A-Z])/g, ' $1').trim(),
+          status: progress.status || 'pending',
+          logs: agentLogs.filter(log => log.message?.includes(type)).map(log => ({
+            message: log.message,
+            status: 'running',
+            time: log.time?.toLocaleTimeString() || ''
+          })),
+          result: progress.data
+        }))}
+        logs={agentLogs.map(log => ({
+          agent: 'agent',
+          message: log.message,
+          status: 'running',
+          time: log.time?.toLocaleTimeString() || ''
+        }))}
+      />
     </motion.div>
   );
 };
