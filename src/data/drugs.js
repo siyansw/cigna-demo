@@ -160,7 +160,7 @@ export const drugData = {
       majorPBMs: [
         { name: 'Express Scripts', status: 'Preferred', tier: 3 },
         { name: 'CVS Caremark', status: 'Non-Preferred', tier: 4, note: 'Dulaglutide preferred' },
-        { name: 'OptumRx', status: 'Under Review', tier: null }
+        { name: 'Cigna', status: 'Under Review', tier: null }
       ],
       vaFormulary: {
         status: 'Formulary with criteria',
@@ -314,7 +314,7 @@ export const drugData = {
       majorPBMs: [
         { name: 'Express Scripts', status: 'Non-Preferred', tier: 4 },
         { name: 'CVS Caremark', status: 'Preferred', tier: 3 },
-        { name: 'OptumRx', status: 'Under Review', tier: null }
+        { name: 'Cigna', status: 'Under Review', tier: null }
       ]
     },
 
@@ -426,7 +426,7 @@ export const drugData = {
       majorPBMs: [
         { name: 'Express Scripts', status: 'Preferred', tier: 3 },
         { name: 'CVS Caremark', status: 'Preferred', tier: 3 },
-        { name: 'OptumRx', status: 'Preferred', tier: 2 }
+        { name: 'Cigna', status: 'Preferred', tier: 2 }
       ]
     },
 
@@ -516,7 +516,7 @@ export const drugData = {
       majorPBMs: [
         { name: 'Express Scripts', status: 'Non-Preferred', tier: 4 },
         { name: 'CVS Caremark', status: 'Non-Preferred', tier: 4 },
-        { name: 'OptumRx', status: 'Non-Preferred', tier: 3 }
+        { name: 'Cigna', status: 'Non-Preferred', tier: 3 }
       ]
     },
 
@@ -601,7 +601,7 @@ export const drugData = {
       majorPBMs: [
         { name: 'Express Scripts', status: 'Non-Preferred', tier: 4 },
         { name: 'CVS Caremark', status: 'Non-Preferred', tier: 4 },
-        { name: 'OptumRx', status: 'Non-Preferred', tier: 4 }
+        { name: 'Cigna', status: 'Non-Preferred', tier: 4 }
       ]
     },
 
@@ -685,7 +685,7 @@ export const drugData = {
       majorPBMs: [
         { name: 'Express Scripts', status: 'Non-Preferred', tier: 5 },
         { name: 'CVS Caremark', status: 'Not Covered', tier: null },
-        { name: 'OptumRx', status: 'Non-Preferred', tier: 5 }
+        { name: 'Cigna', status: 'Non-Preferred', tier: 5 }
       ]
     },
 

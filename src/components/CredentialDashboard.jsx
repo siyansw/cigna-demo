@@ -2,14 +2,19 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Play, CheckCircle, AlertCircle, Clock, RefreshCw } from 'lucide-react';
 import { providers as initialProviders, demoProviderData } from '../data/providers';
+import { runMultipleAgents } from '../services/minoApi';
 import NewsFeed from './NewsFeed';
+import WatchLiveModal from './WatchLiveModal';
 import './CredentialDashboard.css';
 
 const CredentialDashboard = ({ onBack }) => {
   const [providers, setProviders] = useState(initialProviders);
   const [isRunning, setIsRunning] = useState(false);
   const [showWatchLive, setShowWatchLive] = useState(false);
+  const [watchLiveModalOpen, setWatchLiveModalOpen] = useState(false);
   const [timestamp, setTimestamp] = useState(null);
+  const [agentLogs, setAgentLogs] = useState([]);
+  const [agentProgress, setAgentProgress] = useState({});
 
   // Load previous data on mount
   useEffect(() => {
@@ -21,34 +26,91 @@ const CredentialDashboard = ({ onBack }) => {
     }
   }, []);
 
-  const handleRunVerification = () => {
+  const handleRunVerification = async () => {
     setIsRunning(true);
     setShowWatchLive(true);
+    setAgentLogs([]);
+    setAgentProgress({});
 
-    // Simulate agent execution with demo data
-    setTimeout(() => {
-      const updatedProviders = providers.map(provider => {
-        const demoData = demoProviderData[provider.npi];
-        return {
-          ...provider,
-          npiData: demoData.npi,
-          licenseData: demoData.license,
-          verified: true,
-          npiRetrievalTime: Math.floor(Math.random() * 2) + 1, // 1-3 seconds
-          licenseRetrievalTime: Math.floor(Math.random() * 4) + 5 // 5-8 seconds
-        };
+    const startTime = Date.now();
+
+    // Prepare agent configurations for all providers
+    const agentConfigs = [];
+    providers.forEach((provider) => {
+      const [firstName, lastName] = provider.name.split(' ').slice(-2);
+
+      agentConfigs.push({
+        agentType: 'npiRegistry',
+        params: { npiNumber: provider.npi },
+        providerId: provider.id
       });
 
-      setProviders(updatedProviders);
-      setIsRunning(false);
-      setTimestamp(new Date().toISOString());
+      agentConfigs.push({
+        agentType: 'texasMedicalBoard',
+        params: { lastName, firstName },
+        providerId: provider.id
+      });
+    });
 
-      // Save to localStorage
-      localStorage.setItem('credential-verification-data', JSON.stringify({
-        providers: updatedProviders,
-        timestamp: new Date().toISOString()
-      }));
-    }, 8000); // Simulate 8 second execution
+    // Run all agents in parallel
+    await runMultipleAgents(agentConfigs, {
+      onAgentProgress: (agentType, progress) => {
+        setAgentProgress(prev => ({
+          ...prev,
+          [agentType]: progress
+        }));
+
+        setAgentLogs(prev => [...prev, {
+          agent: agentType,
+          message: progress.message,
+          status: progress.status,
+          time: ((Date.now() - startTime) / 1000).toFixed(1) + 's'
+        }]);
+      },
+      onAgentComplete: (agentType, result) => {
+        console.log(`✓ ${agentType} completed:`, result.data);
+
+        // Update provider data with results
+        setProviders(prev => prev.map(provider => {
+          const config = agentConfigs.find(c => c.agentType === agentType);
+          if (!config || config.providerId !== provider.id) return provider;
+
+          if (agentType === 'npiRegistry') {
+            return {
+              ...provider,
+              npiData: result.data,
+              npiRetrievalTime: ((Date.now() - startTime) / 1000).toFixed(1)
+            };
+          } else if (agentType === 'texasMedicalBoard') {
+            return {
+              ...provider,
+              licenseData: result.data,
+              licenseRetrievalTime: ((Date.now() - startTime) / 1000).toFixed(1),
+              verified: true
+            };
+          }
+          return provider;
+        }));
+      },
+      onAllComplete: ({ results, errors }) => {
+        const executionTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`All agents complete in ${executionTime}s`);
+
+        setIsRunning(false);
+        setTimestamp(new Date().toISOString());
+
+        // Save to localStorage
+        const finalProviders = providers.map(provider => ({
+          ...provider,
+          verified: true
+        }));
+
+        localStorage.setItem('credential-verification-data', JSON.stringify({
+          providers: finalProviders,
+          timestamp: new Date().toISOString()
+        }));
+      }
+    });
   };
 
   const handleRefresh = () => {
@@ -121,6 +183,7 @@ const CredentialDashboard = ({ onBack }) => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
+              onClick={() => setWatchLiveModalOpen(true)}
             >
               <span className="live-indicator"></span>
               Watch Live
@@ -274,6 +337,23 @@ const CredentialDashboard = ({ onBack }) => {
 
       {/* News Feed */}
       <NewsFeed type="credential" />
+
+      {/* Watch Live Modal */}
+      <WatchLiveModal
+        isOpen={watchLiveModalOpen}
+        onClose={() => setWatchLiveModalOpen(false)}
+        agents={Object.entries(agentProgress).map(([type, progress]) => ({
+          name: type.replace(/([A-Z])/g, ' $1').trim(),
+          status: progress.status || 'pending',
+          logs: agentLogs.filter(log => log.agent === type).map(log => ({
+            message: log.message,
+            status: log.status,
+            time: log.time
+          })),
+          result: progress.data
+        }))}
+        logs={agentLogs}
+      />
     </div>
   );
 };

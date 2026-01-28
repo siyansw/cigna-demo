@@ -16,11 +16,11 @@ import {
   Video,
   Newspaper
 } from 'lucide-react';
-import tinyfishApi, { runMultipleAgents } from '../services/tinyfishApi';
+import minoApi, { runMultipleAgents } from '../services/minoApi';
 import StreamViewer from './StreamViewer';
 import './AgentPanel.css';
 
-const MODE = tinyfishApi.MODE;
+const MODE = minoApi.MODE;
 
 const AGENT_ICONS = {
   evidence: Database,

@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Play, Clock, RefreshCw, CheckCircle, FileText, Beaker, BookOpen, Shield } from 'lucide-react';
+import { runMultipleAgents } from '../services/minoApi';
 import NewsFeed from './NewsFeed';
+import WatchLiveModal from './WatchLiveModal';
 import './PTDashboard.css';
 
 const PTDashboard = ({ onBack }) => {
   const [drugName] = useState('Semaglutide');
   const [isRunning, setIsRunning] = useState(false);
   const [showWatchLive, setShowWatchLive] = useState(false);
+  const [watchLiveModalOpen, setWatchLiveModalOpen] = useState(false);
   const [timestamp, setTimestamp] = useState(null);
   const [reviewData, setReviewData] = useState(null);
+  const [agentLogs, setAgentLogs] = useState([]);
+  const [agentProgress, setAgentProgress] = useState({});
 
   // Demo data for Semaglutide
   const demoReviewData = {
@@ -55,22 +60,62 @@ const PTDashboard = ({ onBack }) => {
     }
   }, []);
 
-  const handleRunReview = () => {
+  const handleRunReview = async () => {
     setIsRunning(true);
     setShowWatchLive(true);
+    setAgentLogs([]);
+    setAgentProgress({});
 
-    // Simulate agent execution
-    setTimeout(() => {
-      setReviewData(demoReviewData);
-      setIsRunning(false);
-      setTimestamp(new Date().toISOString());
+    const startTime = Date.now();
+    const results = {};
 
-      // Save to localStorage
-      localStorage.setItem('pt-clinical-intelligence-data', JSON.stringify({
-        reviewData: demoReviewData,
-        timestamp: new Date().toISOString()
-      }));
-    }, 5000); // Simulate 5 second execution
+    // Prepare agent configurations
+    const agentConfigs = [
+      { agentType: 'fda', params: { drugName } },
+      { agentType: 'clinicalTrials', params: { drugName } },
+      { agentType: 'pubmed', params: { drugName } }
+    ];
+
+    // Run all agents in parallel
+    await runMultipleAgents(agentConfigs, {
+      onAgentProgress: (agentType, progress) => {
+        setAgentProgress(prev => ({
+          ...prev,
+          [agentType]: progress
+        }));
+
+        setAgentLogs(prev => [...prev, {
+          agent: agentType,
+          message: progress.message,
+          status: progress.status,
+          time: ((Date.now() - startTime) / 1000).toFixed(1) + 's'
+        }]);
+      },
+      onAgentComplete: (agentType, result) => {
+        console.log(`✓ ${agentType} completed:`, result.data);
+        results[agentType] = result.data;
+      },
+      onAllComplete: ({ results: allResults, errors }) => {
+        const executionTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`All agents complete in ${executionTime}s`);
+
+        // Merge results with demo guideline data
+        const finalData = {
+          ...demoReviewData,
+          ...allResults
+        };
+
+        setReviewData(finalData);
+        setIsRunning(false);
+        setTimestamp(new Date().toISOString());
+
+        // Save to localStorage
+        localStorage.setItem('pt-clinical-intelligence-data', JSON.stringify({
+          reviewData: finalData,
+          timestamp: new Date().toISOString()
+        }));
+      }
+    });
   };
 
   const handleRefresh = () => {
@@ -152,6 +197,7 @@ const PTDashboard = ({ onBack }) => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
+              onClick={() => setWatchLiveModalOpen(true)}
             >
               <span className="live-indicator"></span>
               Watch Live
@@ -312,6 +358,23 @@ const PTDashboard = ({ onBack }) => {
 
       {/* News Feed */}
       <NewsFeed type="pt" />
+
+      {/* Watch Live Modal */}
+      <WatchLiveModal
+        isOpen={watchLiveModalOpen}
+        onClose={() => setWatchLiveModalOpen(false)}
+        agents={Object.entries(agentProgress).map(([type, progress]) => ({
+          name: type.replace(/([A-Z])/g, ' $1').trim(),
+          status: progress.status || 'pending',
+          logs: agentLogs.filter(log => log.agent === type).map(log => ({
+            message: log.message,
+            status: log.status,
+            time: log.time
+          })),
+          result: progress.data
+        }))}
+        logs={agentLogs}
+      />
     </div>
   );
 };
