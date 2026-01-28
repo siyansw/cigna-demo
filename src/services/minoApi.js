@@ -199,7 +199,7 @@ const runSimulatedAgent = async (agentType, params, { onProgress, onComplete, on
  * Run a Mino agent with SSE streaming
  */
 export const runAgent = async (agentType, params, { onProgress, onComplete, onError }) => {
-  console.log(`🤖 Running ${agentType} agent in ${MODE} mode`);
+  console.log(`🤖 Running ${agentType} agent in ${MODE} mode with params:`, params);
 
   // Use simulated mode if MODE is 'demo'
   if (MODE === 'demo') {
@@ -208,12 +208,19 @@ export const runAgent = async (agentType, params, { onProgress, onComplete, onEr
   }
 
   console.log(`  → Making LIVE API call for ${agentType}`);
+  console.log(`  → Checking CREDENTIAL_AGENTS:`, agentType in CREDENTIAL_AGENTS);
+  console.log(`  → Checking PT_AGENTS:`, agentType in PT_AGENTS);
 
   const config = CREDENTIAL_AGENTS[agentType] || PT_AGENTS[agentType];
   if (!config) {
+    console.error(`  ✗ Unknown agent type: ${agentType}`);
+    console.error(`  ✗ Available credential agents:`, Object.keys(CREDENTIAL_AGENTS));
+    console.error(`  ✗ Available PT agents:`, Object.keys(PT_AGENTS));
     onError?.(`Unknown agent type: ${agentType}`);
     return;
   }
+
+  console.log(`  ✓ Found config for ${agentType}:`, config.name);
 
   const goal = config.getGoal(...Object.values(params));
 

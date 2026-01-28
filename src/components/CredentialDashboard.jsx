@@ -33,17 +33,42 @@ const CredentialDashboard = ({ onBack }) => {
   const [watchLiveModalOpen, setWatchLiveModalOpen] = useState(false);
   const [agentLogs, setAgentLogs] = useState([]);
 
+  console.log('🏥 CredentialDashboard - Initial providers count:', initialProviders.length);
+  console.log('🏥 CredentialDashboard - Current providers count:', providers.length);
+
   // Load previous data
   useEffect(() => {
     const savedData = localStorage.getItem('credential-verification-data');
+    console.log('💾 Loading from localStorage:', savedData ? 'Found data' : 'No data');
     if (savedData) {
-      const parsed = JSON.parse(savedData);
-      setProviders(parsed.providers || initialProviders);
-      setTimestamp(parsed.timestamp);
+      try {
+        const parsed = JSON.parse(savedData);
+        console.log('📦 Parsed providers count:', parsed.providers?.length || 0);
+
+        // Always use initialProviders as base, but merge in saved data for matching providers
+        if (parsed.providers && parsed.providers.length > 0) {
+          const mergedProviders = initialProviders.map(initialProvider => {
+            const savedProvider = parsed.providers.find(p => p.id === initialProvider.id);
+            return savedProvider || initialProvider;
+          });
+          console.log('🔄 Merged providers count:', mergedProviders.length);
+          setProviders(mergedProviders);
+        } else {
+          console.log('⚠️ No saved providers, using initial:', initialProviders.length);
+          setProviders(initialProviders);
+        }
+        setTimestamp(parsed.timestamp);
+      } catch (e) {
+        console.error('❌ Error parsing localStorage:', e);
+        setProviders(initialProviders);
+      }
+    } else {
+      console.log('✨ No saved data, using all initial providers:', initialProviders.length);
     }
   }, []);
 
   const handleRunVerification = async () => {
+    console.log('🚀 Starting credential verification for', providers.length, 'providers');
     setIsRunning(true);
     setAgentLogs([]);
     setAgentProgress({});
@@ -55,6 +80,8 @@ const CredentialDashboard = ({ onBack }) => {
       const nameParts = provider.name.split(' ');
       const lastName = nameParts[nameParts.length - 1];
       const firstName = nameParts[0];
+
+      console.log(`  → Creating agents for ${provider.name} (ID: ${provider.id})`);
 
       agentConfigs.push({
         agentType: 'npiRegistry',
@@ -68,6 +95,9 @@ const CredentialDashboard = ({ onBack }) => {
         providerId: provider.id
       });
     });
+
+    console.log('📋 Total agent configs created:', agentConfigs.length);
+    console.log('📋 Agent configs:', agentConfigs);
 
     // Run all agents
     await runMultipleAgents(agentConfigs, {
@@ -114,15 +144,21 @@ const CredentialDashboard = ({ onBack }) => {
       },
       onAllComplete: () => {
         const executionTime = ((Date.now() - startTime) / 1000).toFixed(1);
-        console.log(`All verification complete in ${executionTime}s`);
+        console.log(`✅ All verification complete in ${executionTime}s`);
         setIsRunning(false);
         setLastUpdated(new Date());
-        setTimestamp(new Date().toISOString());
+        const newTimestamp = new Date().toISOString();
+        setTimestamp(newTimestamp);
 
-        localStorage.setItem('credential-verification-data', JSON.stringify({
-          providers,
-          timestamp: new Date().toISOString()
-        }));
+        // Save current state - need to use functional update to get latest providers
+        setProviders(currentProviders => {
+          console.log('💾 Saving to localStorage, provider count:', currentProviders.length);
+          localStorage.setItem('credential-verification-data', JSON.stringify({
+            providers: currentProviders,
+            timestamp: newTimestamp
+          }));
+          return currentProviders;
+        });
       }
     });
   };
