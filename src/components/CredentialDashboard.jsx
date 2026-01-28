@@ -106,10 +106,10 @@ const CredentialDashboard = ({ onBack }) => {
     });
   };
 
-  const getStatusColor = (status) => {
-    if (status === 'Active') return 'status-active';
-    if (status === 'Inactive') return 'status-inactive';
-    return 'status-pending';
+  const getStatusBadge = (status) => {
+    if (status === 'Active') return 'status-badge status-active';
+    if (status === 'Inactive') return 'status-badge status-inactive';
+    return 'status-badge status-pending';
   };
 
   const formatDate = (dateString) => {
@@ -237,7 +237,7 @@ const CredentialDashboard = ({ onBack }) => {
                     {provider.verified && (
                       <div className="verification-badge success">
                         <CheckCircle size={16} />
-                        VERIFIED
+                        Verified
                       </div>
                     )}
                   </div>
@@ -261,7 +261,7 @@ const CredentialDashboard = ({ onBack }) => {
                         </div>
                         <div className="detail-row">
                           <span className="detail-label">Status</span>
-                          <span className={`detail-value ${getStatusColor(provider.npiData.status)}`}>
+                          <span className={getStatusBadge(provider.npiData.status)}>
                             {provider.npiData.status}
                           </span>
                         </div>
@@ -298,7 +298,7 @@ const CredentialDashboard = ({ onBack }) => {
                         </div>
                         <div className="detail-row">
                           <span className="detail-label">Status</span>
-                          <span className={`detail-value ${getStatusColor(provider.licenseData.license_status)}`}>
+                          <span className={getStatusBadge(provider.licenseData.license_status)}>
                             {provider.licenseData.license_status}
                           </span>
                         </div>

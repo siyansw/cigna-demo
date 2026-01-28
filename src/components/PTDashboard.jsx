@@ -250,7 +250,7 @@ const PTDashboard = ({ onBack }) => {
               </div>
               <div className="approval-type">
                 <span className="label">Approval Type:</span>
-                <span className="value">{reviewData.fda.approval_type}</span>
+                <span className="approval-type-badge">{reviewData.fda.approval_type}</span>
               </div>
             </div>
           </motion.div>
