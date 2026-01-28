@@ -169,7 +169,7 @@ const CredentialDashboard = ({ onBack }) => {
                 <CheckCircle size={20} />
               </div>
               <div className="stat-content">
-                <div className="stat-value">{providers.filter(p => p.verified).length}/2</div>
+                <div className="stat-value">{providers.filter(p => p.verified).length}/4</div>
                 <div className="stat-label">Verified</div>
               </div>
             </div>
@@ -178,7 +178,7 @@ const CredentialDashboard = ({ onBack }) => {
                 <Shield size={20} />
               </div>
               <div className="stat-content">
-                <div className="stat-value">{providers.filter(p => p.licenseData?.licenseStatus === 'Active').length}/2</div>
+                <div className="stat-value">{providers.filter(p => p.licenseData?.license_status === 'Active').length}/4</div>
                 <div className="stat-label">Active Licenses</div>
               </div>
             </div>
@@ -339,14 +339,14 @@ const CredentialDashboard = ({ onBack }) => {
                 <div className="scalability-content">
                   <h3>Scale to Thousands of Providers</h3>
                   <p>
-                    This demo verifies 2 providers in ~8 seconds. TinyFish can parallelize to verify
+                    This demo verifies 4 providers in ~12 seconds. TinyFish can parallelize to verify
                     100+ providers simultaneously, completing 1,000 provider credentialing checks in under 2 minutes.
                   </p>
                 </div>
                 <div className="scalability-stats-inline">
                   <div className="stat-inline">
-                    <div className="stat-inline-value">2</div>
-                    <div className="stat-inline-label">~8 sec</div>
+                    <div className="stat-inline-value">4</div>
+                    <div className="stat-inline-label">~12 sec</div>
                   </div>
                   <div className="stat-arrow">→</div>
                   <div className="stat-inline">
