@@ -7,14 +7,14 @@
   --bg-card: #1a2234;
   --bg-card-hover: #1f2a40;
 
-  /* Accent colors */
-  --accent-cyan: #00d4aa;
-  --accent-cyan-dim: rgba(0, 212, 170, 0.15);
+  /* Accent colors - Cigna branding */
+  --accent-cyan: #005EB8; /* Cigna blue */
+  --accent-cyan-dim: rgba(0, 94, 184, 0.15);
   --accent-orange: #ff7849;
   --accent-orange-dim: rgba(255, 120, 73, 0.15);
   --accent-purple: #a78bfa;
   --accent-yellow: #fbbf24;
-  --accent-blue: #3b82f6;
+  --accent-blue: #005EB8; /* Cigna blue */
   --accent-red: #ef4444;
   --accent-green: #22c55e;
 
