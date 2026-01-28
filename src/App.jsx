@@ -4,21 +4,30 @@ import PasswordScreen from './components/PasswordScreen';
 import LandingMenu from './components/LandingMenu';
 import CredentialDashboard from './components/CredentialDashboard';
 import Dashboard from './components/Dashboard';
+import DrugDetail from './components/DrugDetail';
 import './App.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentView, setCurrentView] = useState('landing'); // landing, credential-verification, pt-intelligence
+  const [currentView, setCurrentView] = useState('landing'); // landing, credential-verification, pt-intelligence, drug-detail
+  const [selectedDrugId, setSelectedDrugId] = useState(null);
 
   const handleAuthenticate = () => {
     setIsAuthenticated(true);
   };
 
-  const handleNavigate = (view) => {
+  const handleNavigate = (view, drugId) => {
+    if (view === 'drug-detail' && drugId) {
+      setSelectedDrugId(drugId);
+    }
     setCurrentView(view);
   };
 
   const handleBack = () => {
+    setCurrentView('pt-intelligence');
+  };
+
+  const handleBackToLanding = () => {
     setCurrentView('landing');
   };
 
@@ -38,13 +47,22 @@ function App() {
         {currentView === 'credential-verification' && (
           <CredentialDashboard
             key="credential"
-            onBack={handleBack}
+            onBack={handleBackToLanding}
           />
         )}
         {currentView === 'pt-intelligence' && (
           <Dashboard
             key="pt-dashboard"
+            onBack={handleBackToLanding}
+            onNavigate={handleNavigate}
+          />
+        )}
+        {currentView === 'drug-detail' && (
+          <DrugDetail
+            key="drug-detail"
+            drugId={selectedDrugId}
             onBack={handleBack}
+            onNavigate={handleNavigate}
           />
         )}
       </AnimatePresence>

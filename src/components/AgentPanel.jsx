@@ -153,8 +153,8 @@ const AgentPanel = ({ onRefresh, drugName = 'GLP-1 agonists', onNewsUpdate, onRu
         addLog(`✓ ${getAgentName(agentType)}: Completed successfully`);
 
         // Handle news agent completion - update dashboard
-        if (agentType === 'news' && result.data && onNewsUpdate) {
-          console.log('📰 News agent completed with data:', result.data);
+        if (agentType === 'ptNews' && result.data && onNewsUpdate) {
+          console.log('📰 ptNews agent completed with data:', result.data);
           onNewsUpdate(result.data);
         }
 
