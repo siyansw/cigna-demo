@@ -107,13 +107,17 @@ const CredentialDashboard = ({ onBack }) => {
     // Run all agents
     await runMultipleAgents(agentConfigs, {
       onAgentProgress: (identifier, progress) => {
-        console.log(`📊 ${identifier}:`, progress.message);
+        console.log(`📊 ${identifier}:`, progress.message, 'status:', progress.status);
 
         // Track agent progress for panel and watch live
-        setAgentProgress(prev => ({
-          ...prev,
-          [identifier]: progress
-        }));
+        setAgentProgress(prev => {
+          const updated = {
+            ...prev,
+            [identifier]: progress
+          };
+          console.log('📊 Updated agentProgress:', updated);
+          return updated;
+        });
 
         // Track logs for watch live modal
         setAgentLogs(prev => [...prev, {

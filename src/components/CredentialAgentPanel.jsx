@@ -19,26 +19,46 @@ const CredentialAgentPanel = ({ providers, isRunning, agentProgress, onWatchLive
   const [expandedAgent, setExpandedAgent] = useState(null);
   const [viewingStream, setViewingStream] = useState(null);
 
+  console.log('🎛️ CredentialAgentPanel - isRunning:', isRunning);
+  console.log('🎛️ CredentialAgentPanel - agentProgress:', agentProgress);
+
   // Build agent list from providers
   const agents = [];
   providers.forEach(provider => {
+    const npiAgentKey = `npiRegistry-${provider.id}`;
+    const licenseAgentKey = `texasMedicalBoard-${provider.id}`;
+
+    const npiProgress = agentProgress?.[npiAgentKey];
+    const licenseProgress = agentProgress?.[licenseAgentKey];
+
+    // NPI Agent
+    const npiStatus = provider.npiVerified ? 'complete' :
+                      (npiProgress?.status === 'running' ? 'running' :
+                       (isRunning ? 'pending' : 'pending'));
+
     agents.push({
       id: `npi-${provider.id}`,
       name: `NPI Check - ${provider.name}`,
       icon: FileCheck,
-      status: provider.npiVerified ? 'complete' : (isRunning ? 'running' : 'pending'),
-      progress: provider.npiVerified ? 100 : (isRunning ? 50 : 0),
-      result: provider.npiVerified ? 'Verified' : 'Pending',
-      streamingUrl: agentProgress?.[`npiRegistry-${provider.id}`]?.streamingUrl
+      status: npiStatus,
+      progress: provider.npiVerified ? 100 : (npiProgress?.progress || 0),
+      result: provider.npiVerified ? 'Verified' : (npiStatus === 'running' ? 'Processing...' : 'Pending'),
+      streamingUrl: npiProgress?.streamingUrl
     });
+
+    // License Agent
+    const licenseStatus = provider.licenseVerified ? 'complete' :
+                          (licenseProgress?.status === 'running' ? 'running' :
+                           (isRunning ? 'pending' : 'pending'));
+
     agents.push({
       id: `license-${provider.id}`,
       name: `License Check - ${provider.name}`,
       icon: Shield,
-      status: provider.licenseVerified ? 'complete' : (isRunning ? 'running' : 'pending'),
-      progress: provider.licenseVerified ? 100 : (isRunning ? 50 : 0),
-      result: provider.licenseVerified ? 'Verified' : 'Pending',
-      streamingUrl: agentProgress?.[`texasMedicalBoard-${provider.id}`]?.streamingUrl
+      status: licenseStatus,
+      progress: provider.licenseVerified ? 100 : (licenseProgress?.progress || 0),
+      result: provider.licenseVerified ? 'Verified' : (licenseStatus === 'running' ? 'Processing...' : 'Pending'),
+      streamingUrl: licenseProgress?.streamingUrl
     });
   });
 
