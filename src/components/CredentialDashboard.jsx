@@ -14,11 +14,13 @@ import {
   Calendar,
   MapPin,
   Phone,
-  Building
+  Building,
+  Video
 } from 'lucide-react';
 import { providers as initialProviders } from '../data/providers';
 import { runMultipleAgents } from '../services/minoApi';
-import AgentPanel from './AgentPanel';
+import CredentialAgentPanel from './CredentialAgentPanel';
+import WatchLiveModal from './WatchLiveModal';
 import './CredentialDashboard.css';
 
 const CredentialDashboard = ({ onBack }) => {
@@ -27,6 +29,9 @@ const CredentialDashboard = ({ onBack }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [timestamp, setTimestamp] = useState(null);
+  const [agentProgress, setAgentProgress] = useState({});
+  const [watchLiveModalOpen, setWatchLiveModalOpen] = useState(false);
+  const [agentLogs, setAgentLogs] = useState([]);
 
   // Load previous data
   useEffect(() => {
@@ -40,6 +45,8 @@ const CredentialDashboard = ({ onBack }) => {
 
   const handleRunVerification = async () => {
     setIsRunning(true);
+    setAgentLogs([]);
+    setAgentProgress({});
     const startTime = Date.now();
 
     // Prepare agent configurations
@@ -66,6 +73,20 @@ const CredentialDashboard = ({ onBack }) => {
     await runMultipleAgents(agentConfigs, {
       onAgentProgress: (agentType, progress) => {
         console.log(`${agentType}:`, progress.message);
+
+        // Track agent progress for panel and watch live
+        setAgentProgress(prev => ({
+          ...prev,
+          [`${agentType}-${progress.providerId || ''}`]: progress
+        }));
+
+        // Track logs for watch live modal
+        setAgentLogs(prev => [...prev, {
+          agent: agentType,
+          message: progress.message,
+          status: progress.status,
+          time: ((Date.now() - startTime) / 1000).toFixed(1) + 's'
+        }]);
       },
       onAgentComplete: (agentType, result) => {
         console.log(`✓ ${agentType} completed:`, result.data);
@@ -206,14 +227,25 @@ const CredentialDashboard = ({ onBack }) => {
           <div className="section">
             <div className="section-header">
               <h2 className="section-title">Provider Credentials</h2>
-              <button
-                className="btn btn-primary"
-                onClick={handleRunVerification}
-                disabled={isRunning}
-              >
-                <RefreshCw size={16} className={isRunning ? 'spinning' : ''} />
-                {isRunning ? 'Verifying...' : 'Run Verification'}
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                {isRunning && (
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setWatchLiveModalOpen(true)}
+                  >
+                    <Video size={16} />
+                    Watch Live
+                  </button>
+                )}
+                <button
+                  className="btn btn-primary"
+                  onClick={handleRunVerification}
+                  disabled={isRunning}
+                >
+                  <RefreshCw size={16} className={isRunning ? 'spinning' : ''} />
+                  {isRunning ? 'Verifying...' : 'Run Verification'}
+                </button>
+              </div>
             </div>
 
             <div className="provider-grid">
@@ -415,12 +447,30 @@ const CredentialDashboard = ({ onBack }) => {
 
         {/* Agent Panel Sidebar */}
         {showAgentPanel && (
-          <AgentPanel
-            onRefresh={handleRunVerification}
-            drugName="Provider Credentials"
+          <CredentialAgentPanel
+            providers={providers}
+            isRunning={isRunning}
+            agentProgress={agentProgress}
           />
         )}
       </div>
+
+      {/* Watch Live Modal */}
+      <WatchLiveModal
+        isOpen={watchLiveModalOpen}
+        onClose={() => setWatchLiveModalOpen(false)}
+        agents={Object.entries(agentProgress).map(([key, progress]) => ({
+          name: key,
+          status: progress.status || 'pending',
+          logs: agentLogs.filter(log => log.agent === key.split('-')[0]).map(log => ({
+            message: log.message,
+            status: log.status,
+            time: log.time
+          })),
+          result: progress.data
+        }))}
+        logs={agentLogs}
+      />
     </motion.div>
   );
 };
