@@ -152,7 +152,7 @@ const CredentialDashboard = ({ onBack }) => {
         transition={{ duration: 0.5 }}
       >
         <h1 className="credential-title">
-          Cigna Provider Credential Verification
+          Healthcare Provider Credential Verification
         </h1>
         <p className="credential-subtitle">
           Real-time automated credentialing at scale

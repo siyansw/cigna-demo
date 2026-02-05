@@ -277,7 +277,7 @@ const CredentialDashboard = ({ onBack }) => {
             <span>TinyFish</span>
           </div>
           <span className="header-divider">|</span>
-          <span className="header-title">Cigna Provider Credentialing</span>
+          <span className="header-title">Healthcare Provider Credentialing</span>
         </div>
         <div className="header-right">
           <div className="header-status">

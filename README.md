@@ -1,4 +1,4 @@
-# Cigna Clinical Intelligence Platform - TinyFish Integration
+# Healthcare Clinical Intelligence Platform - TinyFish Integration
 
 Interactive demonstration app showcasing TinyFish AI-powered automation for two key healthcare workflows:
 1. **Provider Credential Verification** - Real-time NPI and medical license lookups
@@ -22,7 +22,7 @@ Interactive demonstration app showcasing TinyFish AI-powered automation for two 
 - **News Feed**: Latest pharmaceutical and formulary news
 
 ### Common Features
-- **Password-Protected Access**: Secure entry with `cigna2026` or `tinyfish2026`
+- **Password-Protected Access**: Secure entry with `demo2026` or `tinyfish2026`
 - **Watch Live Modal**: Real-time SSE streaming of agent execution with logs
 - **Persistent State**: Dashboard loads instantly with previous data
 - **Refresh Capability**: Update data with smooth animations
@@ -184,7 +184,7 @@ src/
 │   ├── providers.js            # Provider data (NEW)
 │   └── drugs.js                # Drug data
 ├── App.jsx                     # Main app with routing
-└── index.css                   # Global styles (Cigna branding)
+└── index.css                   # Global styles
 ```
 
 ## Technology Stack
@@ -199,7 +199,7 @@ src/
 ## Usage
 
 1. **Start the app**: Open `http://localhost:5173`
-2. **Enter password**: `cigna2026` or `tinyfish2026`
+2. **Enter password**: `demo2026` or `tinyfish2026`
 3. **Select dashboard**: Choose Credential Verification or P&T Intelligence
 4. **Run automation**: Click "Run Verification" or "Run Clinical Review"
 5. **Watch live**: Click "Watch Live" to see agents in action
@@ -244,4 +244,4 @@ npm run preview
 
 ## License
 
-Proprietary - Cigna Clinical Intelligence Demo Application
+Proprietary - Healthcare Clinical Intelligence Demo Application
