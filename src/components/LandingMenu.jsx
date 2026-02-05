@@ -13,7 +13,7 @@ const LandingMenu = ({ onNavigate }) => {
       >
         <div className="landing-header">
           <h1 className="landing-title">
-            Cigna <span className="text-cyan">× TinyFish</span>
+            Healthcare <span className="text-cyan">× TinyFish</span>
           </h1>
           <p className="landing-subtitle">
             Clinical Intelligence Platform

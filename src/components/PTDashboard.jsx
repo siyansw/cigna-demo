@@ -164,7 +164,7 @@ const PTDashboard = ({ onBack }) => {
         transition={{ duration: 0.5 }}
       >
         <h1 className="pt-title">
-          Cigna P&T Clinical Intelligence
+          P&T Clinical Intelligence
         </h1>
         <div className="drug-info">
           <div className="drug-name-section">
