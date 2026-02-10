@@ -1,6 +1,6 @@
 // TinyFish API Service
 const TINYFISH_API_KEY = import.meta.env.VITE_TINYFISH_API_KEY || 'sk-mino-ryawPOUEUxGTGSgoGX3Qg8DTkOV8Htm3';
-const TINYFISH_API_URL = import.meta.env.VITE_TINYFISH_API_URL || 'https://mino.ai/v1/automation/run-sse';
+const TINYFISH_API_URL = import.meta.env.VITE_TINYFISH_API_URL || 'https://agent.tinyfish.ai/v1/automation/run-sse';
 const MODE = import.meta.env.VITE_MODE || 'demo';
 
 // Debug logging
