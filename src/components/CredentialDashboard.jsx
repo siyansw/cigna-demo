@@ -226,13 +226,18 @@ const CredentialDashboard = ({ onBack }) => {
       p.licenseData.disciplinary_actions !== 'None'
     );
 
-    // License expiration analysis
+    // License expiration analysis (use 180 days to match alerts section)
+    const now = new Date();
     const expiringCount = providers.filter(p => {
       if (!p.licenseData?.expiration_date) return false;
       const expDate = new Date(p.licenseData.expiration_date);
-      const sixMonths = new Date();
-      sixMonths.setMonth(sixMonths.getMonth() + 6);
-      return expDate < sixMonths;
+      const daysUntil = Math.floor((expDate - now) / (1000 * 60 * 60 * 24));
+      return daysUntil >= 0 && daysUntil < 180;
+    }).length;
+    const expiredCount = providers.filter(p => {
+      if (!p.licenseData?.expiration_date) return false;
+      const expDate = new Date(p.licenseData.expiration_date);
+      return expDate < now;
     }).length;
 
     // Build insights
@@ -250,8 +255,11 @@ const CredentialDashboard = ({ onBack }) => {
       insights.push('⚠ Review disciplinary history');
     }
 
+    if (expiredCount > 0) {
+      insights.push(`⚠ ${expiredCount} license(s) expired — immediate action required`);
+    }
     if (expiringCount > 0) {
-      insights.push(`⚠ ${expiringCount} license(s) expiring within 6 months`);
+      insights.push(`⚠ ${expiringCount} license(s) expiring within 180 days`);
     }
 
     return insights;
@@ -520,27 +528,31 @@ const CredentialDashboard = ({ onBack }) => {
                 <h2 className="section-title">Alerts & Notifications</h2>
               </div>
               <div className="alerts-grid">
-                {providers.filter(p => p.licenseData).map(provider => {
+                {providers.filter(p => p.licenseData?.expiration_date).map(provider => {
                   const expirationDate = new Date(provider.licenseData.expiration_date);
                   const today = new Date();
                   const daysUntilExpiration = Math.floor((expirationDate - today) / (1000 * 60 * 60 * 24));
-                  const isExpiringSoon = daysUntilExpiration < 180;
+                  const isExpired = daysUntilExpiration < 0;
+                  const isExpiringSoon = daysUntilExpiration >= 0 && daysUntilExpiration < 180;
 
-                  if (!isExpiringSoon) return null;
+                  if (!isExpired && !isExpiringSoon) return null;
 
                   return (
-                    <div key={provider.id} className="alert-card warning">
+                    <div key={provider.id} className={`alert-card ${isExpired ? 'error' : 'warning'}`}>
                       <div className="alert-icon">
                         <AlertTriangle size={20} />
                       </div>
                       <div className="alert-content">
-                        <div className="alert-title">License Expiring Soon</div>
+                        <div className="alert-title">{isExpired ? 'License Expired' : 'License Expiring Soon'}</div>
                         <div className="alert-message">
-                          {provider.name}'s {provider.licenseData.state} license expires in {daysUntilExpiration} days
+                          {isExpired
+                            ? `${provider.name}'s ${provider.licenseData.state || ''} license expired ${Math.abs(daysUntilExpiration)} days ago`
+                            : `${provider.name}'s ${provider.licenseData.state || ''} license expires in ${daysUntilExpiration} days`
+                          }
                         </div>
                       </div>
-                      <div className="alert-badge warning">
-                        {daysUntilExpiration} days
+                      <div className={`alert-badge ${isExpired ? 'error' : 'warning'}`}>
+                        {isExpired ? 'Expired' : `${daysUntilExpiration} days`}
                       </div>
                     </div>
                   );
@@ -562,36 +574,6 @@ const CredentialDashboard = ({ onBack }) => {
             </div>
           )}
 
-          {/* Scalability Section */}
-          {providers.some(p => p.verified) && (
-            <div className="section">
-              <div className="scalability-banner">
-                <div className="scalability-content">
-                  <h3>Scale to Thousands of Providers</h3>
-                  <p>
-                    This demo verifies 4 providers in ~12 seconds. TinyFish can parallelize to verify
-                    100+ providers simultaneously, completing 1,000 provider credentialing checks in under 2 minutes.
-                  </p>
-                </div>
-                <div className="scalability-stats-inline">
-                  <div className="stat-inline">
-                    <div className="stat-inline-value">4</div>
-                    <div className="stat-inline-label">~12 sec</div>
-                  </div>
-                  <div className="stat-arrow">→</div>
-                  <div className="stat-inline">
-                    <div className="stat-inline-value">100</div>
-                    <div className="stat-inline-label">~15 sec</div>
-                  </div>
-                  <div className="stat-arrow">→</div>
-                  <div className="stat-inline">
-                    <div className="stat-inline-value">1,000</div>
-                    <div className="stat-inline-label">~2 min</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </main>
 
         {/* Agent Panel Sidebar */}
